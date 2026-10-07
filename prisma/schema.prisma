@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  password  String
+  role      String     @default("CUSTOMER")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  downloads Download[]
+  orders    Order[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  artist      String
+  description String?
+  price       Int
+  currency    String      @default("KES")
+  difficulty  String?
+  category    String?
+  tuning      String?
+  capo        String?
+  style       String?
+  coverImage  String?
+  previewPdf  String?
+  previewMedia String?
+  fullPdf     String?
+  featured    Boolean     @default(false)
+  published   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  downloads   Download[]
+  OrderItems  OrderItem[]
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  userId    String?
+  total     Int
+  currency  String      @default("KES")
+  status    String      @default("PENDING")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      User?       @relation(fields: [userId], references: [id])
+  items     OrderItem[]
+  payment   Payment?
+}
+
+model OrderItem {
+  id              String  @id @default(cuid())
+  orderId         String
+  productId       String
+  quantity        Int     @default(1)
+  priceAtPurchase Int
+  product         Product @relation(fields: [productId], references: [id])
+  order           Order   @relation(fields: [orderId], references: [id])
+}
+
+model Download {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, productId], name: "user_product_download")
+}
+
+model Payment {
+  id                String   @id @default(cuid())
+  orderId           String   @unique
+  provider          String
+  status            String   @default("PENDING")
+  amount            Int
+  phone             String
+  merchantRequestId String?
+  checkoutRequestId String?  @unique
+  receiptNumber     String?
+  resultCode        Int?
+  rawCallback       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  order             Order    @relation(fields: [orderId], references: [id])
+}

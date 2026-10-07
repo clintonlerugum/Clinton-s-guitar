@@ -1,0 +1,38 @@
+{
+  "name": "clintons-guitar",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "postinstall": "prisma generate",
+    "build": "next build",
+    "start": "next start",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:generate": "prisma generate",
+    "seed": "ts-node --transpile-only prisma/seed.ts",
+    "reset:admin-password": "ts-node --project scripts/tsconfig.json --transpile-only scripts/reset-admin-password.ts",
+    "test:mpesa": "node scripts/run-mpesa-tests.cjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcrypt": "^5.1.0",
+    "jsonwebtoken": "^9.0.0",
+    "next": "13.5.6",
+    "pg": "^8.11.0",
+    "prisma": "^5.9.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^20.4.2",
+    "@types/react": "18.2.25",
+    "@types/react-dom": "18.2.7",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.4.17",
+    "ts-node": "^10.9.1",
+    "typescript": "5.2.2"
+  }
+}

@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #__next {
+  height: 100%;
+  min-height: 100%;
+  background-color: #0f1724 !important;
+}
+
+:root {
+  color-scheme: dark;
+  --page-background: #0f1724;
+  --surface: #1f2937;
+  --accent: #b68f40;
+  --muted: #9ca3af;
+}
+
+body {
+  @apply text-gray-100 antialiased;
+  background: var(--page-background) !important;
+  color: #e5e7eb;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+}
+
+main {
+  min-height: calc(100vh - 72px);
+  background: var(--page-background);
+}
+
+input, textarea, select {
+  background-color: var(--page-background);
+  color: #e5e7eb;
+}
+
+::selection {
+  background: var(--accent);
+  color: #000;
+}
+
+.container { @apply max-w-6xl mx-auto px-4; }
+
+/* Hero */
+.hero {
+  @apply flex flex-col items-center;
+  background: linear-gradient(135deg, #0f1724 0%, #1f2937 100%);
+  border-bottom: 1px solid #1f2937;
+  padding: 80px 20px;
+  text-align: center;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+.hero h1 { font-size: 48px; margin-bottom: 20px; }
+.hero p { font-size: 18px; margin-bottom: 30px; }
+
+.home-section { padding: 60px 20px; }
+.section-title { color: #fff; font-size: 32px; margin-bottom: 40px; }
+
+.brand-accent { color: #b68f40 }
+
+/* Card */
+.card {
+  @apply overflow-hidden rounded-lg shadow-card;
+  background: var(--surface);
+}
+
+.card img {
+  background: linear-gradient(135deg, #b68f40, #8b6f47);
+}
+
+/* Buttons */
+.btn { @apply inline-block rounded font-semibold; padding: 12px 30px; transition: all .3s; }
+.btn-primary { @apply text-black; background: var(--accent); }
+.btn-primary:hover { background: #d4a574; transform: translateY(-2px); }
+.btn-ghost { @apply border-2 border-accent text-accent; background: transparent; }
+.btn-ghost:hover { background: var(--accent); color: #000; }
+
+/* Forms */
+.form-input { @apply w-full px-3 py-2 rounded border border-gray-700 text-gray-100; background: var(--page-background); }
+
+/* Responsive helpers for small screens */
+@media (max-width: 640px) {
+  .container { @apply px-4 }
+  .hero h1 { font-size: 32px; }
+  .hero p { font-size: 16px; }
+}
