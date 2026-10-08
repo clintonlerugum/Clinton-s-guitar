@@ -105,13 +105,13 @@ export async function POST(req: Request) {
     if (!order.payment.checkoutRequestId) {
       target.searchParams.set(mpesaEnabled() ? 'uncertain' : 'demo', '1')
     }
-    const response = NextResponse.redirect(target)
+    const response = NextResponse.redirect(target, { status: 303 })
     response.cookies.set('cart', '', { path: '/', maxAge: 0 })
     return response
   }
 
   if (!mpesaEnabled()) {
-    const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}&demo=1`, req.url))
+    const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}&demo=1`, req.url), { status: 303 })
     response.cookies.set('cart', '', { path: '/', maxAge: 0 })
     return response
   }
@@ -140,7 +140,7 @@ export async function POST(req: Request) {
         }
       }
       console.error(`M-Pesa checkout initiation failed for order ${order.id}.`, getMpesaCheckoutFailureDiagnostics(error))
-      const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}&uncertain=1`, req.url))
+      const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}&uncertain=1`, req.url), { status: 303 })
       response.cookies.set('cart', '', { path: '/', maxAge: 0 })
       return response
     }
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
     })
     console.error(`M-Pesa checkout initiation failed for order ${order.id}.`, getMpesaCheckoutFailureDiagnostics(error))
     return new NextResponse(null, {
-      status: 307,
+      status: 303,
       headers: { Location: '/cart?error=payment' }
     })
   }
@@ -172,12 +172,12 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     console.error(`Could not save M-Pesa identifiers for order ${order.id}; leaving it pending for reconciliation.`, error)
-    const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}&uncertain=1`, req.url))
+    const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}&uncertain=1`, req.url), { status: 303 })
     response.cookies.set('cart', '', { path: '/', maxAge: 0 })
     return response
   }
 
-  const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}`, req.url))
+  const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}`, req.url), { status: 303 })
   response.cookies.set('cart', '', { path: '/', maxAge: 0 })
   return response
 }

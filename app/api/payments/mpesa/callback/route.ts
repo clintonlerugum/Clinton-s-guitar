@@ -39,6 +39,7 @@ export async function POST(req: Request) {
   ) {
     return NextResponse.json({ ResultCode: 1, ResultDesc: 'Invalid callback shape' }, { status: 400 })
   }
+  console.info('M-Pesa callback received', { resultCode })
 
   const payment = await prisma.payment.findUnique({
     where: { checkoutRequestId },
@@ -94,6 +95,10 @@ export async function POST(req: Request) {
       (verification.phone !== undefined && verification.phone !== phone) ||
       (verification.receiptNumber !== undefined && verification.receiptNumber !== receiptNumber)
     ) {
+      console.warn('M-Pesa callback is awaiting status verification.', {
+        state: verification.state,
+        reason: verification.state === 'pending' || verification.state === 'invalid' ? verification.reason : 'Provider verification did not match callback'
+      })
       return NextResponse.json({
         ResultCode: 0,
         ResultDesc: 'Callback received; payment verification is pending'
