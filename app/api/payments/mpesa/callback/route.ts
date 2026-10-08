@@ -90,9 +90,9 @@ export async function POST(req: Request) {
       verification.state !== 'paid' ||
       verification.checkoutRequestId !== checkoutRequestId ||
       verification.resultCode !== 0 ||
-      verification.amount !== amount ||
-      verification.phone !== phone ||
-      verification.receiptNumber !== receiptNumber
+      (verification.amount !== undefined && verification.amount !== amount) ||
+      (verification.phone !== undefined && verification.phone !== phone) ||
+      (verification.receiptNumber !== undefined && verification.receiptNumber !== receiptNumber)
     ) {
       return NextResponse.json({
         ResultCode: 0,

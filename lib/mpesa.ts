@@ -457,9 +457,6 @@ export async function queryStkPushStatus(checkoutRequestId: string): Promise<Stk
 
   const rawResponse = JSON.stringify(data).slice(0, 10000)
   if (resultCode === 0) {
-    if (amount === undefined || phone === undefined || !receiptNumber) {
-      return { state: 'pending', reason: 'M-Pesa success response is missing payment verification details' }
-    }
     return { state: 'paid', checkoutRequestId, resultCode, amount, phone, receiptNumber, rawResponse }
   }
   if (definitiveFailureCodes.has(resultCode)) {
