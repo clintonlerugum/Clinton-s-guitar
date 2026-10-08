@@ -132,7 +132,12 @@ function requiredConfig() {
   const missing = Object.entries(values).filter(([, value]) => !value).map(([key]) => key)
   if (missing.length) throw new Error(`Missing M-Pesa configuration: ${missing.join(', ')}`)
   const callbackUrl = new URL(values.callbackUrl!)
-  if (callbackUrl.protocol !== 'https:') throw new Error('MPESA_CALLBACK_URL must use HTTPS.')
+  if (!['http:', 'https:'].includes(callbackUrl.protocol)) {
+    throw new Error('MPESA_CALLBACK_URL must use HTTP or HTTPS.')
+  }
+  if (process.env.MPESA_ENVIRONMENT === 'production' && callbackUrl.protocol !== 'https:') {
+    throw new Error('MPESA_CALLBACK_URL must use HTTPS in production.')
+  }
   return values as Record<keyof typeof values, string>
 }
 

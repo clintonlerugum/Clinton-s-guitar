@@ -8,6 +8,11 @@ import { parseCartCookieHeader } from '../../../lib/cart'
 const duplicateCheckoutWindowMs = 5 * 60 * 1000
 type CheckoutOrder = Prisma.OrderGetPayload<{ include: { items: true; payment: true } }>
 
+function mpesaEnabled() {
+  const mode = process.env.PAYMENT_MODE?.trim().toLowerCase()
+  return mode === 'live' || mode === 'mpesa'
+}
+
 function sameCart(
   orderItems: Array<{ productId: string; quantity: number; priceAtPurchase: number }>,
   cartItems: Array<{ productId: string; quantity: number; priceAtPurchase: number }>
@@ -98,14 +103,14 @@ export async function POST(req: Request) {
     if (!order.payment) throw new Error(`Pending checkout order ${order.id} has no payment record`)
     const target = new URL(`/checkout/pending?orderId=${order.id}`, req.url)
     if (!order.payment.checkoutRequestId) {
-      target.searchParams.set(process.env.PAYMENT_MODE === 'live' ? 'uncertain' : 'demo', '1')
+      target.searchParams.set(mpesaEnabled() ? 'uncertain' : 'demo', '1')
     }
     const response = NextResponse.redirect(target)
     response.cookies.set('cart', '', { path: '/', maxAge: 0 })
     return response
   }
 
-  if (process.env.PAYMENT_MODE !== 'live') {
+  if (!mpesaEnabled()) {
     const response = NextResponse.redirect(new URL(`/checkout/pending?orderId=${order.id}&demo=1`, req.url))
     response.cookies.set('cart', '', { path: '/', maxAge: 0 })
     return response

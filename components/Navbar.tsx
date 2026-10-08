@@ -17,7 +17,6 @@ function getCartCount() {
 export default function Navbar() {
   const [open, setOpen] = React.useState(false)
   const [cartCount, setCartCount] = React.useState(0)
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false)
 
   React.useEffect(() => {
     const updateCartCount = () => setCartCount(getCartCount())
@@ -26,19 +25,7 @@ export default function Navbar() {
     const handleCartUpdate = () => updateCartCount()
     window.addEventListener('cart:updated', handleCartUpdate)
 
-    let active = true
-    fetch('/api/auth/me', { cache: 'no-store' })
-      .then((response) => {
-        if (!response.ok) throw new Error('Unable to check the current session.')
-        return response.json()
-      })
-      .then(({ user }) => {
-        if (active) setIsLoggedIn(Boolean(user))
-      })
-      .catch((error) => console.error('Unable to check the current session.', error))
-
     return () => {
-      active = false
       window.removeEventListener('cart:updated', handleCartUpdate)
     }
   }, [])
@@ -57,7 +44,7 @@ export default function Navbar() {
             Cart
             <span className="cart-badge" aria-label={`Cart has ${cartCount} item${cartCount === 1 ? '' : 's'}`}>{cartCount}</span>
           </Link>
-          <Link href={isLoggedIn ? '/account' : '/login'}>Account</Link>
+          <Link href="/account">Account</Link>
         </nav>
 
         <button className="mobile-menu-button" onClick={() => setOpen(!open)} aria-label="Toggle menu">
@@ -73,7 +60,7 @@ export default function Navbar() {
             <Link href="/about" onClick={() => setOpen(false)}>About</Link>
             <Link href="/contact" onClick={() => setOpen(false)}>Contact</Link>
             <Link href="/cart" onClick={() => setOpen(false)}>Cart ({cartCount})</Link>
-            <Link href={isLoggedIn ? '/account' : '/login'} onClick={() => setOpen(false)}>Account</Link>
+            <Link href="/account" onClick={() => setOpen(false)}>Account</Link>
           </div>
         </div>
       )}
