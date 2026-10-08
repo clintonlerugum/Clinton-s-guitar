@@ -13,19 +13,6 @@ export default async function TabPage({ params }: Props) {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="card">
         <img src={p.coverImage ?? '/placeholders/cover1.jpg'} alt={p.title} className="w-full rounded" />
-        <div className="mt-4">
-          <div className="font-semibold">Preview</div>
-          {p.previewPdf ? (
-            <a href={p.previewPdf} className="text-accent">Open preview (PDF)</a>
-          ) : !p.previewMedia ? (
-            <div className="text-sm text-gray-400">No preview available</div>
-          ) : null}
-          {p.previewMedia && (/\.(mp4|webm)$/i.test(p.previewMedia) ? (
-            <video controls preload="metadata" src={p.previewMedia} className="mt-3 w-full rounded" />
-          ) : (
-            <audio controls preload="metadata" src={p.previewMedia} className="mt-3 w-full" />
-          ))}
-        </div>
       </div>
 
       <div className="lg:col-span-2">
