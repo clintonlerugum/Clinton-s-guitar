@@ -52,6 +52,12 @@ export default async function AccountPage() {
               <div className="text-sm">Total: KES {o.total}</div>
               {['PENDING', 'FAILED'].includes(o.status) && (!o.payment || ['PENDING', 'FAILED'].includes(o.payment.status)) && (
                 <div className="mt-3">
+                  {o.status === 'PENDING' && o.payment?.provider === 'MPESA' && o.payment.status === 'PENDING' && o.payment.checkoutRequestId && (
+                    <form action="/api/payments/mpesa/reconcile" method="post" className="mb-3">
+                      <input type="hidden" name="orderId" value={o.id} />
+                      <button type="submit" className="btn btn-primary">Check M-Pesa payment status</button>
+                    </form>
+                  )}
                   <OrderDeleteButton orderId={o.id} />
                 </div>
               )}
