@@ -35,7 +35,7 @@ export default async function Shop({ searchParams }: { searchParams?: any }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="shop-product-grid">
         {products.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}

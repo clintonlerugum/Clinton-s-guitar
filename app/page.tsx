@@ -19,7 +19,7 @@ export default async function Home() {
 
       <div className="home-section">
         <h2 className="section-title">Latest Tabs</h2>
-        <div className="product-grid">
+        <div className="product-grid latest-products">
         {latest.map((p) => (
           <ProductCard key={p.id} product={p} />
         ))}
