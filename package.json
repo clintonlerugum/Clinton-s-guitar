@@ -14,6 +14,7 @@
     "test:mpesa": "node scripts/run-mpesa-tests.cjs"
   },
   "dependencies": {
+    "@prisma/adapter-pg": "^5.22.0",
     "@prisma/client": "^5.22.0",
     "bcrypt": "^5.1.0",
     "jsonwebtoken": "^9.0.0",
@@ -27,6 +28,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.4.2",
+    "@types/pg": "^8.23.1",
     "@types/react": "18.2.25",
     "@types/react-dom": "18.2.7",
     "autoprefixer": "^10.4.14",

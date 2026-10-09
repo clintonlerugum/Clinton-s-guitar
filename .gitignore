@@ -10,3 +10,6 @@ prisma/dev.db-journal
 storage/
 public/uploads/
 .next-order-delete-check/
+
+# Local Supabase database CA certificate
+certs/supabase-ca.crt

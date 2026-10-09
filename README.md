@@ -57,6 +57,7 @@ Open http://localhost:3000
 ## Environment variables
 Copy `.env.example` to `.env` and configure:
 - `DATABASE_URL` — PostgreSQL connection string for the existing Supabase database
+- `SUPABASE_DB_CA` — path to the Supabase PostgreSQL CA certificate. Download it in Supabase Dashboard → Database Settings → SSL Configuration, save it as `certs/supabase-ca.crt`, then restart Next.js. The Prisma runtime verifies the database certificate.
 - `SUPABASE_URL` — existing Supabase project URL
 - `SUPABASE_SECRET_KEY` — server-only Supabase key used for Storage uploads and private PDF reads
 - `JWT_SECRET` — secure secret used to sign auth tokens
