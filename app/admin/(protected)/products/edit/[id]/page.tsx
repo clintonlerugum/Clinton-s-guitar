@@ -7,19 +7,19 @@ export default async function EditProduct({ params }: { params: { id: string } }
   return (
     <section>
       <h1 className="text-2xl font-bold mb-4">Edit Tab</h1>
-      <form action={`/api/admin/products/${product.id}`} method="post" encType="multipart/form-data" className="grid grid-cols-1 gap-3 max-w-xl">
-        <input name="title" defaultValue={product.title} required className="px-3 py-2 bg-gray-800 rounded" />
-        <input name="artist" defaultValue={product.artist} required className="px-3 py-2 bg-gray-800 rounded" />
-        <input name="slug" defaultValue={product.slug} className="px-3 py-2 bg-gray-800 rounded" />
-        <textarea name="description" defaultValue={product.description ?? ''} className="px-3 py-2 bg-gray-800 rounded"></textarea>
-        <input name="price" type="number" min="1" step="1" defaultValue={product.price} required className="px-3 py-2 bg-gray-800 rounded" />
+      <form action={`/api/admin/products/${product.id}`} method="post" encType="multipart/form-data" className="grid w-full min-w-0 grid-cols-1 gap-3 max-w-xl">
+        <input name="title" defaultValue={product.title} required className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
+        <input name="artist" defaultValue={product.artist} required className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
+        <input name="slug" defaultValue={product.slug} className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
+        <textarea name="description" defaultValue={product.description ?? ''} className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded"></textarea>
+        <input name="price" type="number" min="1" step="1" defaultValue={product.price} required className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
         <div>
           <label htmlFor="tuning" className="text-sm text-gray-400 block mb-1">Tuning</label>
-          <input id="tuning" name="tuning" defaultValue={product.tuning ?? ''} placeholder="e.g. Standard (E A D G B E), Drop D, DADGAD, Open G" className="px-3 py-2 bg-gray-800 rounded" />
+          <input id="tuning" name="tuning" defaultValue={product.tuning ?? ''} placeholder="e.g. Standard (E A D G B E), Drop D, DADGAD, Open G" className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
         </div>
         <div>
           <label htmlFor="difficulty" className="text-sm text-gray-400 block mb-1">Difficulty</label>
-          <select id="difficulty" name="difficulty" required defaultValue={product.difficulty ?? ''} className="px-3 py-2 bg-gray-800 rounded">
+          <select id="difficulty" name="difficulty" required defaultValue={product.difficulty ?? ''} className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded">
             {!product.difficulty && <option value="" disabled>Select difficulty</option>}
             {!['Beginner', 'Intermediate', 'Advanced'].includes(product.difficulty ?? '') && product.difficulty && (
               <option value={product.difficulty}>{product.difficulty} (existing)</option>
@@ -33,31 +33,31 @@ export default async function EditProduct({ params }: { params: { id: string } }
         <div>
           <div className="text-sm text-gray-400">Current cover</div>
           {product.coverImage && <img src={product.coverImage} className="w-32 mt-2" />}
-          <input name="coverImage" type="file" accept="image/*" />
+          <input name="coverImage" type="file" accept="image/*" className="block w-full max-w-full text-sm" />
         </div>
 
         <div>
           <div className="text-sm text-gray-400">Current preview</div>
           {product.previewPdf && <a href={product.previewPdf} className="text-accent">Preview PDF</a>}
-          <input name="previewPdf" type="file" accept="application/pdf" />
+          <input name="previewPdf" type="file" accept="application/pdf" className="block w-full max-w-full text-sm" />
         </div>
 
         <div>
           <div className="text-sm text-gray-400">Current audio/video preview</div>
           {product.previewMedia && <a href={product.previewMedia} className="text-accent">Open preview</a>}
-          <input name="previewMedia" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,video/mp4,video/webm" />
+          <input name="previewMedia" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,video/mp4,video/webm" className="block w-full max-w-full text-sm" />
         </div>
 
         <div>
           <div className="text-sm text-gray-400">Full PDF (protected)</div>
           {product.fullPdf && <div className="text-sm text-gray-400">Uploaded (protected)</div>}
-          <input name="fullPdf" type="file" accept="application/pdf" />
+          <input name="fullPdf" type="file" accept="application/pdf" className="block w-full max-w-full text-sm" />
         </div>
 
         <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Featured</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="published" defaultChecked={product.published} /> Published</label>
 
-        <button type="submit" className="px-4 py-2 bg-accent text-black rounded">Save Changes</button>
+        <button type="submit" className="w-full rounded bg-accent px-4 py-2 text-black sm:w-auto">Save Changes</button>
       </form>
     </section>
   )

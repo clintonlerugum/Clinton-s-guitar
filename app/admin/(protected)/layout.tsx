@@ -15,5 +15,5 @@ export default function ProtectedAdminLayout({ children }: { children: ReactNode
     )
   }
 
-  return <div className="container py-8">{children}</div>
+  return <div className="container min-w-0 py-6 sm:py-8">{children}</div>
 }

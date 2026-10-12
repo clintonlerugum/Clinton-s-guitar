@@ -4,7 +4,7 @@ export default function NewProductPage() {
   return (
     <section>
       <h1 className="text-2xl font-bold mb-4">Add New Tab</h1>
-      <form action="/api/admin/products" method="post" encType="multipart/form-data" className="grid grid-cols-1 gap-3 max-w-xl">
+      <form action="/api/admin/products" method="post" encType="multipart/form-data" className="grid w-full min-w-0 grid-cols-1 gap-3 max-w-xl">
         <input name="title" placeholder="Song title" required className="form-input" />
         <input name="artist" placeholder="Artist" required className="form-input" />
         <input name="slug" placeholder="slug (leave blank to use title)" className="form-input" />
@@ -26,27 +26,27 @@ export default function NewProductPage() {
 
         <div>
           <label className="text-sm text-gray-400 block mb-1">Cover Image</label>
-          <input name="coverImage" type="file" accept="image/*" />
+          <input name="coverImage" type="file" accept="image/*" className="block w-full max-w-full text-sm" />
         </div>
 
         <div>
           <label className="text-sm text-gray-400 block mb-1">Preview PDF</label>
-          <input name="previewPdf" type="file" accept="application/pdf" />
+          <input name="previewPdf" type="file" accept="application/pdf" className="block w-full max-w-full text-sm" />
         </div>
 
         <div>
           <label className="text-sm text-gray-400 block mb-1">Optional audio/video preview</label>
-          <input name="previewMedia" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,video/mp4,video/webm" />
+          <input name="previewMedia" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,video/mp4,video/webm" className="block w-full max-w-full text-sm" />
         </div>
 
         <div>
           <label className="text-sm text-gray-400 block mb-1">Full PDF (protected)</label>
-          <input name="fullPdf" type="file" accept="application/pdf" />
+          <input name="fullPdf" type="file" accept="application/pdf" className="block w-full max-w-full text-sm" />
         </div>
 
         <label className="flex items-center gap-2"><input type="checkbox" name="featured" /> Featured</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="published" /> Published</label>
-        <button type="submit" className="btn btn-primary">Create &amp; Publish Tab</button>
+        <button type="submit" className="btn btn-primary w-full sm:w-auto">Create &amp; Publish Tab</button>
       </form>
     </section>
   )

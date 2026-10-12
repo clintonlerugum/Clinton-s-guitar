@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { getTokenFromCookies, verifyToken } from '../../../../lib/auth'
 import { prisma } from '../../../../lib/prisma'
 import { readProtectedPdf } from '../../../../lib/product-uploads'
+import { pdfDownloadHeaders } from '../../../../lib/download-filename'
 
-export async function GET(req: Request, { params }: any) {
+export async function GET(_req: Request, { params }: any) {
   const token = getTokenFromCookies()
   const data: any = verifyToken(token)
   if (!data) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -23,5 +24,5 @@ export async function GET(req: Request, { params }: any) {
 
   const file = await readProtectedPdf(product.fullPdf)
   if (!file) return NextResponse.json({ error: 'File missing' }, { status: 404 })
-  return new NextResponse(file, { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${product.slug}.pdf"` } })
+  return new NextResponse(file, { headers: pdfDownloadHeaders(product.title, product.artist) })
 }
