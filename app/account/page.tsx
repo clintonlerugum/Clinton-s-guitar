@@ -5,11 +5,26 @@ import OrderDeleteButton from '../../components/OrderDeleteButton'
 
 export const dynamic = 'force-dynamic'
 
+function SignInPrompt() {
+  return (
+    <section className="mx-auto max-w-xl">
+      <div className="card p-6 text-center sm:p-8">
+        <h1 className="text-2xl font-bold">Your Account</h1>
+        <p className="mt-2 text-gray-300">Log in to view your orders and download your purchased tabs.</p>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link href="/login?redirectTo=%2Faccount" className="btn btn-primary w-full text-center sm:w-auto">Log In</Link>
+          <Link href="/register?redirectTo=%2Faccount" className="btn btn-ghost w-full text-center sm:w-auto">Create Account</Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default async function AccountPage() {
   const token = getTokenFromCookies()
   const data: any = verifyToken(token)
   if (!data || typeof data.id !== 'string') {
-    return <div>Please <Link href="/login">log in</Link> to view your account.</div>
+    return <SignInPrompt />
   }
 
   const customer = await prisma.user.findUnique({
@@ -17,7 +32,7 @@ export default async function AccountPage() {
     select: { name: true, email: true }
   })
   if (!customer) {
-    return <div>Please <Link href="/login">log in</Link> to view your account.</div>
+    return <SignInPrompt />
   }
 
   const orders = await prisma.order.findMany({
