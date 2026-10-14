@@ -35,7 +35,13 @@ export default function NewProductPage() {
         </div>
 
         <div>
-          <label className="text-sm text-gray-400 block mb-1">Optional audio/video preview</label>
+          <label htmlFor="youtubeUrl" className="text-sm text-gray-400 block mb-1">YouTube video link (optional)</label>
+          <input id="youtubeUrl" name="youtubeUrl" type="url" placeholder="Paste a YouTube link, e.g. https://youtu.be/..." className="form-input" />
+          <p className="mt-1 text-xs text-gray-500">Paste the video link; you do not need to upload the video.</p>
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-400 block mb-1">Or upload an audio/video preview</label>
           <input name="previewMedia" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,video/mp4,video/webm" className="block w-full max-w-full text-sm" />
         </div>
 

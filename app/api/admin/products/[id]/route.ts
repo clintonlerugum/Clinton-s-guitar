@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '../../../../../lib/prisma'
 import { getTokenFromCookies, verifyToken } from '../../../../../lib/auth'
 import { normalizeProductSlug, saveProductUpload } from '../../../../../lib/product-uploads'
+import { getYouTubeVideoId } from '../../../../../lib/youtube'
 
 export async function POST(req: Request, { params }: any) {
   // Verify admin auth
@@ -22,6 +23,7 @@ export async function POST(req: Request, { params }: any) {
     const priceValue = String(form.get('price') ?? '').trim()
     const price = Number(priceValue)
     const difficulty = String(form.get('difficulty') ?? '')
+    const youtubeUrl = String(form.get('youtubeUrl') ?? '').trim()
     const published = form.get('published') === 'on'
     const fullPdfUpload = form.get('fullPdf')
     if (!title || !artist || !slug || !/^\d+$/.test(priceValue) || !Number.isSafeInteger(price) || price < 1) {
@@ -33,13 +35,16 @@ export async function POST(req: Request, { params }: any) {
     if (!['Beginner', 'Intermediate', 'Advanced'].includes(difficulty) && difficulty !== existingProduct.difficulty) {
       return NextResponse.json({ error: 'Select Beginner, Intermediate, or Advanced difficulty.' }, { status: 400 })
     }
+    if (youtubeUrl && !getYouTubeVideoId(youtubeUrl)) {
+      return NextResponse.json({ error: 'Enter a valid YouTube video link.' }, { status: 400 })
+    }
     const duplicateSlug = await prisma.product.findFirst({ where: { slug, NOT: { id } } })
     if (duplicateSlug) return NextResponse.json({ error: 'A tab with this slug already exists.' }, { status: 409 })
 
     const [coverImage, previewPdf, previewMedia, fullPdf] = await Promise.all([
       saveProductUpload(form.get('coverImage'), 'coverImage'),
       saveProductUpload(form.get('previewPdf'), 'previewPdf'),
-      saveProductUpload(form.get('previewMedia'), 'previewMedia'),
+      youtubeUrl ? Promise.resolve(youtubeUrl) : saveProductUpload(form.get('previewMedia'), 'previewMedia'),
       saveProductUpload(form.get('fullPdf'), 'fullPdf')
     ])
     await prisma.product.update({

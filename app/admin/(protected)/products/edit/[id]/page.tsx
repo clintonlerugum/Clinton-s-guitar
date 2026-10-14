@@ -1,4 +1,5 @@
 import { prisma } from '../../../../../../lib/prisma'
+import { getYouTubeVideoId } from '../../../../../../lib/youtube'
 
 export default async function EditProduct({ params }: { params: { id: string } }) {
   const product = await prisma.product.findUnique({ where: { id: params.id } })
@@ -43,8 +44,14 @@ export default async function EditProduct({ params }: { params: { id: string } }
         </div>
 
         <div>
+          <label htmlFor="youtubeUrl" className="text-sm text-gray-400 block mb-1">YouTube video link (optional)</label>
+          <input id="youtubeUrl" name="youtubeUrl" type="url" defaultValue={getYouTubeVideoId(product.previewMedia) ? product.previewMedia ?? '' : ''} placeholder="Paste a YouTube link, e.g. https://youtu.be/..." className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
+          <p className="mt-1 text-xs text-gray-500">Paste the video link; you do not need to upload the video.</p>
+        </div>
+
+        <div>
           <div className="text-sm text-gray-400">Current audio/video preview</div>
-          {product.previewMedia && <a href={product.previewMedia} className="text-accent">Open preview</a>}
+          {product.previewMedia && !getYouTubeVideoId(product.previewMedia) && <a href={product.previewMedia} className="text-accent">Open preview</a>}
           <input name="previewMedia" type="file" accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,audio/webm,video/mp4,video/webm" className="block w-full max-w-full text-sm" />
         </div>
 
