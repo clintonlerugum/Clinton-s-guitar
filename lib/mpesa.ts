@@ -121,13 +121,24 @@ export function isValidKenyanPhone(phone: string) {
   return /^2547\d{8}$/.test(phone)
 }
 
+function getTransactionType() {
+  const transactionType = process.env.MPESA_TRANSACTION_TYPE?.trim()
+  if (!transactionType) return 'CustomerPayBillOnline'
+  if (transactionType === 'CustomerPayBillOnline' || transactionType === 'CustomerBuyGoodsOnline') {
+    return transactionType
+  }
+  throw new Error('MPESA_TRANSACTION_TYPE must be CustomerPayBillOnline or CustomerBuyGoodsOnline.')
+}
+
 function requiredConfig() {
   const values = {
     consumerKey: process.env.MPESA_CONSUMER_KEY,
     consumerSecret: process.env.MPESA_CONSUMER_SECRET,
     shortcode: process.env.MPESA_SHORTCODE,
+    partyB: process.env.MPESA_PARTY_B || process.env.MPESA_SHORTCODE,
     passkey: process.env.MPESA_PASSKEY,
-    callbackUrl: process.env.MPESA_CALLBACK_URL
+    callbackUrl: process.env.MPESA_CALLBACK_URL,
+    transactionType: getTransactionType()
   }
   const missing = Object.entries(values).filter(([, value]) => !value).map(([key]) => key)
   if (missing.length) throw new Error(`Missing M-Pesa configuration: ${missing.join(', ')}`)
@@ -227,7 +238,7 @@ export async function initiateStkPush(input: {
       }
     )
   }
-  const { shortcode, passkey, callbackUrl } = config
+  const { shortcode, partyB, passkey, callbackUrl, transactionType } = config
   const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)
   const password = Buffer.from(`${shortcode}${passkey}${timestamp}`).toString('base64')
   const accessToken = await getAccessToken()
@@ -244,10 +255,10 @@ export async function initiateStkPush(input: {
         BusinessShortCode: shortcode,
         Password: password,
         Timestamp: timestamp,
-        TransactionType: 'CustomerPayBillOnline',
+        TransactionType: transactionType,
         Amount: input.amount,
         PartyA: input.phone,
-        PartyB: shortcode,
+        PartyB: partyB,
         PhoneNumber: input.phone,
         CallBackURL: callbackUrl,
         AccountReference: input.accountReference,
