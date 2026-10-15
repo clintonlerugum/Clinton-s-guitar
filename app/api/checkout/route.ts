@@ -124,8 +124,9 @@ export async function POST(req: Request) {
     stk = await initiateStkPush({
       amount: total,
       phone,
-      accountReference: order.id,
-      transactionDescription: `Guitar tabs order ${order.id}`
+      // Daraja limits AccountReference to 12 characters and TransactionDesc to 13.
+      accountReference: order.id.replace(/[^A-Za-z0-9]/g, '').slice(-12),
+      transactionDescription: 'Guitar tabs'
     })
   } catch (error) {
     if (error instanceof MpesaRequestError && error.outcome === 'ambiguous') {
