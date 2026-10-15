@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '../../../lib/prisma'
 import { getTokenFromCookies, verifyToken } from '../../../lib/auth'
+import PendingMpesaAutoCheck from '../../../components/PendingMpesaAutoCheck'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,7 @@ export default async function CheckoutPending({ searchParams }: { searchParams?:
   return (
     <section className="mx-auto max-w-2xl py-12">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Order {order.id}</p>
-      <h1 className="mt-2 text-3xl font-bold text-white">{isPaid ? 'Payment confirmed' : isFailed ? 'Payment failed' : 'Payment pending'}</h1>
+      <h1 className="mt-2 text-3xl font-bold text-white">{isPaid ? 'Payment confirmed' : isFailed ? 'Payment failed' : demo ? 'Demo checkout' : 'Waiting for M-Pesa payment'}</h1>
       <div className="mt-6 rounded-lg border border-gray-700 bg-gray-900 p-6 text-gray-300">
         {isPaid ? (
           <p>Your payment is confirmed. Your downloads are available in your account.</p>
@@ -34,18 +35,21 @@ export default async function CheckoutPending({ searchParams }: { searchParams?:
         ) : searchParams?.reconciled === 'failed' ? (
           <p>M-Pesa confirmed that this payment did not complete. You can restore the items to your cart and try again.</p>
         ) : searchParams?.reconciled === 'pending' ? (
-          <p>M-Pesa has not returned a final payment result yet. Your order remains pending; do not create another payment.</p>
+          <p>Your payment is still being processed by M-Pesa. This is not a failed payment. Keep this page open and do not start another checkout.</p>
         ) : searchParams?.reconciled === 'unverified' ? (
-          <p>The M-Pesa response could not be safely matched to this order. Your order remains pending while it is reviewed.</p>
+          <p>M-Pesa has not confirmed the final result yet, so this order remains pending. We’ll keep checking; do not start another checkout.</p>
         ) : searchParams?.reconciled === 'unavailable' ? (
-          <p>This payment cannot be checked automatically. Your order remains unchanged; contact support before trying another payment.</p>
+          <p>M-Pesa’s status could not be checked just now. This does not mean your payment failed. Keep this page open and check again below.</p>
         ) : searchParams?.uncertain === '1' ? (
-          <p>The M-Pesa request may have reached the provider, but its response could not be confirmed. Do not pay again yet. This order remains pending while its status is reconciled.</p>
+          <p>Your M-Pesa request is awaiting confirmation. It has not been marked as failed. Keep this page open and do not start another checkout.</p>
         ) : (
-          <p>Check your phone and approve the M-Pesa prompt. Your downloads will appear in your account only after Safaricom confirms the payment.</p>
+          <p>The payment request has been sent. Check your phone and enter your M-Pesa PIN. This page will update when M-Pesa confirms the payment.</p>
         )}
-        <p className="mt-4 text-sm text-gray-400">Order status: <strong className="text-accent">{order.status}</strong></p>
+        <p className="mt-4 text-sm text-gray-400">Order status: <strong className="text-accent">{isPaid ? 'PAID' : isFailed ? 'FAILED' : 'AWAITING PAYMENT'}</strong></p>
       </div>
+      {!demo && !isPaid && !isFailed && order.status === 'PENDING' && order.payment?.status === 'PENDING' && order.payment.checkoutRequestId && (
+        <PendingMpesaAutoCheck orderId={order.id} />
+      )}
       <div className="mt-6 flex flex-wrap gap-3">
         {isFailed && (
           <form action="/api/cart/restore" method="post">
@@ -56,7 +60,7 @@ export default async function CheckoutPending({ searchParams }: { searchParams?:
         {!demo && !isPaid && !isFailed && order.status === 'PENDING' && order.payment?.status === 'PENDING' && order.payment.checkoutRequestId && (
           <form action="/api/payments/mpesa/reconcile" method="post">
             <input type="hidden" name="orderId" value={order.id} />
-            <button type="submit" className="btn btn-primary">Check M-Pesa payment status</button>
+            <button type="submit" className="btn btn-primary">Check status now</button>
           </form>
         )}
         <Link href="/account" className="btn btn-primary">View account</Link>
