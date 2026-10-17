@@ -1,7 +1,7 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { prisma } from '../../../lib/prisma'
 import { getTokenFromCookies, verifyToken } from '../../../lib/auth'
-import PendingMpesaAutoCheck from '../../../components/PendingMpesaAutoCheck'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +17,11 @@ export default async function CheckoutPending({ searchParams }: { searchParams?:
   }
 
   const demo = searchParams?.demo === '1'
+  if (!demo && order.payment?.provider === 'MPESA') {
+    const target = new URLSearchParams()
+    target.set(order.status === 'FAILED' ? 'failedOrderId' : 'pendingOrderId', order.id)
+    redirect(`/account?${target.toString()}`)
+  }
   const isPaid = order.status === 'PAID'
   const isFailed = order.status === 'FAILED'
   return (
@@ -47,20 +52,11 @@ export default async function CheckoutPending({ searchParams }: { searchParams?:
         )}
         <p className="mt-4 text-sm text-gray-400">Order status: <strong className="text-accent">{isPaid ? 'PAID' : isFailed ? 'FAILED' : 'AWAITING PAYMENT'}</strong></p>
       </div>
-      {!demo && !isPaid && !isFailed && order.status === 'PENDING' && order.payment?.status === 'PENDING' && order.payment.checkoutRequestId && (
-        <PendingMpesaAutoCheck orderId={order.id} redirectAfterMs={60_000} />
-      )}
       <div className="mt-6 flex flex-wrap gap-3">
         {isFailed && (
           <form action="/api/cart/restore" method="post">
             <input type="hidden" name="orderId" value={order.id} />
             <button type="submit" className="btn btn-primary">Restore items to cart</button>
-          </form>
-        )}
-        {!demo && !isPaid && !isFailed && order.status === 'PENDING' && order.payment?.status === 'PENDING' && order.payment.checkoutRequestId && (
-          <form action="/api/payments/mpesa/reconcile" method="post">
-            <input type="hidden" name="orderId" value={order.id} />
-            <button type="submit" className="btn btn-primary">Check status now</button>
           </form>
         )}
         <Link href="/account" className="btn btn-primary">View account</Link>

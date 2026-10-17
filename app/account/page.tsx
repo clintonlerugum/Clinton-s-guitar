@@ -21,7 +21,7 @@ function SignInPrompt() {
   )
 }
 
-export default async function AccountPage({ searchParams }: { searchParams?: { pendingOrderId?: string } }) {
+export default async function AccountPage({ searchParams }: { searchParams?: { pendingOrderId?: string; failedOrderId?: string } }) {
   const token = getTokenFromCookies()
   const data: any = verifyToken(token)
   if (!data || typeof data.id !== 'string') {
@@ -68,6 +68,11 @@ export default async function AccountPage({ searchParams }: { searchParams?: { p
           Your M-Pesa order is still pending. Keep this page open; it will update to PAID after Safaricom confirms your payment.
         </p>
       )}
+      {orders.some((order) => order.id === searchParams?.failedOrderId && order.status === 'FAILED') && (
+        <p className="my-3 rounded border border-red-500/40 bg-gray-900 p-3 text-sm text-red-300" role="alert">
+          M-Pesa confirmed that this payment did not complete. Use the restore button on this order to try again.
+        </p>
+      )}
       {orders.length === 0 ? <div className="p-4 bg-gray-900 rounded">No orders yet.</div> : (
         <ul className="space-y-3 mb-6">
           {orders.map((order) => (
@@ -82,8 +87,8 @@ export default async function AccountPage({ searchParams }: { searchParams?: { p
                   <div className="text-sm">Total: KES {order.total}</div>
                 </div>
               </div>
-              {order.id === searchParams?.pendingOrderId && order.status === 'PENDING' && order.payment?.provider === 'MPESA' && order.payment.status === 'PENDING' && order.payment.checkoutRequestId && (
-                <PendingMpesaAutoCheck orderId={order.id} accountPage />
+              {order.id === searchParams?.pendingOrderId && order.status === 'PENDING' && order.payment?.provider === 'MPESA' && order.payment.status === 'PENDING' && (
+                <PendingMpesaAutoCheck orderId={order.id} canReconcile={Boolean(order.payment.checkoutRequestId)} />
               )}
               <ul className="mt-3 space-y-1 border-t border-gray-800 pt-3">
                 {order.items.map((item) => (
@@ -95,10 +100,10 @@ export default async function AccountPage({ searchParams }: { searchParams?: { p
               </ul>
               {['PENDING', 'FAILED'].includes(order.status) && (!order.payment || ['PENDING', 'FAILED'].includes(order.payment.status)) && (
                 <div className="mt-3">
-                  {order.status === 'PENDING' && order.payment?.provider === 'MPESA' && order.payment.status === 'PENDING' && order.payment.checkoutRequestId && (
-                    <form action="/api/payments/mpesa/reconcile" method="post" className="mb-3">
+                  {order.status === 'FAILED' && (
+                    <form action="/api/cart/restore" method="post" className="mb-3">
                       <input type="hidden" name="orderId" value={order.id} />
-                      <button type="submit" className="btn btn-primary w-full sm:w-auto">Check M-Pesa payment status</button>
+                      <button type="submit" className="btn btn-primary w-full sm:w-auto">Restore items to cart</button>
                     </form>
                   )}
                   <OrderDeleteButton orderId={order.id} />

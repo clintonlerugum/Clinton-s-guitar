@@ -103,10 +103,8 @@ export async function POST(req: Request) {
   const { order, reused } = checkoutOrder
   if (reused) {
     if (!order.payment) throw new Error(`Pending checkout order ${order.id} has no payment record`)
-    const target = new URL(`/checkout/pending?orderId=${order.id}`, req.url)
-    if (!order.payment.checkoutRequestId) {
-      target.searchParams.set(mpesaEnabled() ? 'uncertain' : 'demo', '1')
-    }
+    const target = new URL('/account', req.url)
+    target.searchParams.set('pendingOrderId', order.id)
     const response = new NextResponse(null, {
       status: 303,
       headers: { Location: target.toString() },
@@ -146,7 +144,9 @@ export async function POST(req: Request) {
         }
       }
       console.error(`M-Pesa checkout initiation failed for order ${order.id}.`, getMpesaCheckoutFailureDiagnostics(error))
-      const response = new NextResponse(null, { status: 303, headers: { Location: new URL(`/checkout/pending?orderId=${order.id}&uncertain=1`, req.url).toString() } })
+      const target = new URL('/account', req.url)
+      target.searchParams.set('pendingOrderId', order.id)
+      const response = new NextResponse(null, { status: 303, headers: { Location: target.toString() } })
       response.cookies.set('cart', '', { path: '/', maxAge: 0 })
       return response
     }
@@ -165,10 +165,9 @@ export async function POST(req: Request) {
       }
     })
     console.error(`M-Pesa checkout initiation failed for order ${order.id}.`, getMpesaCheckoutFailureDiagnostics(error))
-    return new NextResponse(null, {
-      status: 303,
-      headers: { Location: '/cart?error=payment' }
-    })
+    const target = new URL('/account', req.url)
+    target.searchParams.set('failedOrderId', order.id)
+    return new NextResponse(null, { status: 303, headers: { Location: target.toString() } })
   }
 
   try {
@@ -178,12 +177,16 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     console.error(`Could not save M-Pesa identifiers for order ${order.id}; leaving it pending for reconciliation.`, error)
-    const response = new NextResponse(null, { status: 303, headers: { Location: new URL(`/checkout/pending?orderId=${order.id}&uncertain=1`, req.url).toString() } })
+    const target = new URL('/account', req.url)
+    target.searchParams.set('pendingOrderId', order.id)
+    const response = new NextResponse(null, { status: 303, headers: { Location: target.toString() } })
     response.cookies.set('cart', '', { path: '/', maxAge: 0 })
     return response
   }
 
-  const response = new NextResponse(null, { status: 303, headers: { Location: new URL(`/checkout/pending?orderId=${order.id}`, req.url).toString() } })
+  const target = new URL('/account', req.url)
+  target.searchParams.set('pendingOrderId', order.id)
+  const response = new NextResponse(null, { status: 303, headers: { Location: target.toString() } })
   response.cookies.set('cart', '', { path: '/', maxAge: 0 })
   return response
 }

@@ -9,12 +9,10 @@ const maxAutomaticChecks = 20
 
 export default function PendingMpesaAutoCheck({
   orderId,
-  redirectAfterMs,
-  accountPage = false
+  canReconcile = true
 }: {
   orderId: string
-  redirectAfterMs?: number
-  accountPage?: boolean
+  canReconcile?: boolean
 }) {
   const router = useRouter()
   const [automaticChecks, setAutomaticChecks] = useState(0)
@@ -26,7 +24,7 @@ export default function PendingMpesaAutoCheck({
 
     const checkPayment = async () => {
       if (!active) return
-      if (checks < maxAutomaticChecks) {
+      if (canReconcile && checks < maxAutomaticChecks) {
         checks += 1
         setAutomaticChecks(checks)
 
@@ -45,32 +43,27 @@ export default function PendingMpesaAutoCheck({
 
       if (active) {
         router.refresh()
-        timer = setTimeout(checkPayment, checks < maxAutomaticChecks ? checkIntervalMs : passiveRefreshIntervalMs)
+        timer = setTimeout(
+          checkPayment,
+          canReconcile && checks < maxAutomaticChecks ? checkIntervalMs : passiveRefreshIntervalMs
+        )
       }
     }
 
     timer = setTimeout(checkPayment, checkIntervalMs)
-    const redirectTimer = redirectAfterMs === undefined
-      ? undefined
-      : setTimeout(() => {
-          if (active) router.replace(`/account?pendingOrderId=${encodeURIComponent(orderId)}`)
-        }, redirectAfterMs)
     return () => {
       active = false
       clearTimeout(timer)
-      if (redirectTimer) clearTimeout(redirectTimer)
     }
-  }, [orderId, redirectAfterMs, router])
+  }, [canReconcile, orderId, router])
 
   return (
     <p className="mt-4 text-sm text-gray-400" aria-live="polite">
-      {automaticChecks < maxAutomaticChecks
-        ? accountPage
+      {!canReconcile
+        ? 'This order is pending. Your account will refresh while we wait for M-Pesa confirmation.'
+        : automaticChecks < maxAutomaticChecks
           ? 'This order is pending. We’re checking M-Pesa and will update it here when payment is confirmed.'
-          : 'We’re checking with M-Pesa automatically. Keep this page open and approve the prompt on your phone.'
-        : accountPage
-          ? 'Still pending. This order will change to PAID here when Safaricom confirms payment.'
-          : 'Still waiting for M-Pesa. We’ll take you to your account shortly so you can follow this order there.'}
+          : 'Still pending. This order will change to PAID here when Safaricom confirms payment.'}
     </p>
   )
 }
