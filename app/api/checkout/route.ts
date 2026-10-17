@@ -5,6 +5,8 @@ import { getTokenFromCookies, verifyToken } from '../../../lib/auth'
 import { getMpesaCheckoutFailureDiagnostics, initiateStkPush, isValidKenyanPhone, MpesaRequestError, normalizeKenyanPhone } from '../../../lib/mpesa'
 import { parseCartCookieHeader } from '../../../lib/cart'
 
+export const maxDuration = 60
+
 const duplicateCheckoutWindowMs = 5 * 60 * 1000
 type CheckoutOrder = Prisma.OrderGetPayload<{ include: { items: true; payment: true } }>
 

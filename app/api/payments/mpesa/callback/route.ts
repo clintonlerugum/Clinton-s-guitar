@@ -3,6 +3,8 @@ import { prisma } from '../../../../../lib/prisma'
 import { getCallbackItem, isValidKenyanPhone, normalizeKenyanPhone, queryStkPushStatus } from '../../../../../lib/mpesa'
 import { finalizeMpesaPayment } from '../../../../../lib/payment-reconciliation'
 
+export const maxDuration = 60
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

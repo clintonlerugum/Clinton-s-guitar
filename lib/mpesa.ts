@@ -109,6 +109,8 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}) {
   }
 }
 
+let cachedAccessToken: { token: string; expiresAt: number } | undefined
+
 export function normalizeKenyanPhone(value: string) {
   const digits = value.replace(/\D/g, '')
   if (digits.startsWith('254')) return digits
@@ -154,6 +156,10 @@ function requiredConfig() {
 
 async function getAccessToken() {
   const { consumerKey, consumerSecret } = requiredConfig()
+  if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now() + 30_000) {
+    return cachedAccessToken.token
+  }
+
   const credentials = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64')
   let response: Response
   try {
@@ -211,6 +217,13 @@ async function getAccessToken() {
         stkRequestAttempted: false
       }
     )
+  }
+  const expiresIn = Number(data.expires_in)
+  if (Number.isFinite(expiresIn) && expiresIn > 30) {
+    cachedAccessToken = {
+      token: data.access_token,
+      expiresAt: Date.now() + (expiresIn - 30) * 1000
+    }
   }
   return data.access_token
 }

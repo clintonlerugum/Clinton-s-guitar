@@ -4,6 +4,8 @@ import { prisma } from '../../../../../lib/prisma'
 import { finalizeMpesaPayment } from '../../../../../lib/payment-reconciliation'
 import { queryStkPushStatus } from '../../../../../lib/mpesa'
 
+export const maxDuration = 60
+
 function redirectToOrder(req: Request, orderId: string, result: string) {
   const target = new URL('/checkout/pending', req.url)
   target.searchParams.set('orderId', orderId)
