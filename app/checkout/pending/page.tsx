@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { prisma } from '../../../lib/prisma'
 import { getTokenFromCookies, verifyToken } from '../../../lib/auth'
 
@@ -17,11 +16,6 @@ export default async function CheckoutPending({ searchParams }: { searchParams?:
   }
 
   const demo = searchParams?.demo === '1'
-  if (!demo && order.payment?.provider === 'MPESA') {
-    const target = new URLSearchParams()
-    target.set(order.status === 'FAILED' ? 'failedOrderId' : 'pendingOrderId', order.id)
-    redirect(`/account?${target.toString()}`)
-  }
   const isPaid = order.status === 'PAID'
   const isFailed = order.status === 'FAILED'
   return (
