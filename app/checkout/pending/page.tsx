@@ -48,7 +48,7 @@ export default async function CheckoutPending({ searchParams }: { searchParams?:
         <p className="mt-4 text-sm text-gray-400">Order status: <strong className="text-accent">{isPaid ? 'PAID' : isFailed ? 'FAILED' : 'AWAITING PAYMENT'}</strong></p>
       </div>
       {!demo && !isPaid && !isFailed && order.status === 'PENDING' && order.payment?.status === 'PENDING' && order.payment.checkoutRequestId && (
-        <PendingMpesaAutoCheck orderId={order.id} />
+        <PendingMpesaAutoCheck orderId={order.id} redirectAfterMs={60_000} />
       )}
       <div className="mt-6 flex flex-wrap gap-3">
         {isFailed && (

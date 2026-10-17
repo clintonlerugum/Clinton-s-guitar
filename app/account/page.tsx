@@ -2,6 +2,7 @@ import { getTokenFromCookies, verifyToken } from '../../lib/auth'
 import { prisma } from '../../lib/prisma'
 import Link from 'next/link'
 import OrderDeleteButton from '../../components/OrderDeleteButton'
+import PendingMpesaAutoCheck from '../../components/PendingMpesaAutoCheck'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +21,7 @@ function SignInPrompt() {
   )
 }
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: { searchParams?: { pendingOrderId?: string } }) {
   const token = getTokenFromCookies()
   const data: any = verifyToken(token)
   if (!data || typeof data.id !== 'string') {
@@ -62,10 +63,15 @@ export default async function AccountPage() {
         </form>
       </div>
       <h2 className="font-semibold">Orders</h2>
+      {orders.some((order) => order.id === searchParams?.pendingOrderId && order.status === 'PENDING') && (
+        <p className="my-3 rounded border border-accent/40 bg-gray-900 p-3 text-sm text-gray-300" aria-live="polite">
+          Your M-Pesa order is still pending. Keep this page open; it will update to PAID after Safaricom confirms your payment.
+        </p>
+      )}
       {orders.length === 0 ? <div className="p-4 bg-gray-900 rounded">No orders yet.</div> : (
         <ul className="space-y-3 mb-6">
           {orders.map((order) => (
-            <li key={order.id} className="min-w-0 rounded bg-gray-900 p-3 sm:p-4">
+            <li key={order.id} className={`min-w-0 rounded bg-gray-900 p-3 sm:p-4 ${order.id === searchParams?.pendingOrderId ? 'border border-accent/50' : ''}`}>
               <div className="flex flex-wrap justify-between gap-x-4 gap-y-2">
                 <div className="min-w-0 flex-1">
                   <div className="break-all">Order code: {order.id}</div>
@@ -76,6 +82,9 @@ export default async function AccountPage() {
                   <div className="text-sm">Total: KES {order.total}</div>
                 </div>
               </div>
+              {order.id === searchParams?.pendingOrderId && order.status === 'PENDING' && order.payment?.provider === 'MPESA' && order.payment.status === 'PENDING' && order.payment.checkoutRequestId && (
+                <PendingMpesaAutoCheck orderId={order.id} accountPage />
+              )}
               <ul className="mt-3 space-y-1 border-t border-gray-800 pt-3">
                 {order.items.map((item) => (
                   <li key={item.id} className="flex flex-wrap justify-between gap-x-3 text-sm">
