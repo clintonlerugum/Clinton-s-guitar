@@ -61,7 +61,6 @@ export async function POST(req: Request, { params }: any) {
         ...(previewPdf && { previewPdf }),
         ...(previewMedia && { previewMedia }),
         ...(fullPdf && { fullPdf }),
-        featured: form.get('featured') === 'on',
         published
       }
     })

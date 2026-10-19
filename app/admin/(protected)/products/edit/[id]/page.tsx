@@ -13,7 +13,7 @@ export default async function EditProduct({ params }: { params: { id: string } }
         <input name="artist" defaultValue={product.artist} required className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
         <input name="slug" defaultValue={product.slug} className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
         <textarea name="description" defaultValue={product.description ?? ''} className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded"></textarea>
-        <input name="price" type="number" min="1" step="1" defaultValue={product.price} required className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
+        <input name="price" type="text" inputMode="numeric" pattern="[0-9]+" defaultValue={product.price} required className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
         <div>
           <label htmlFor="tuning" className="text-sm text-gray-400 block mb-1">Tuning</label>
           <input id="tuning" name="tuning" defaultValue={product.tuning ?? ''} placeholder="e.g. Standard (E A D G B E), Drop D, DADGAD, Open G" className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
@@ -38,12 +38,6 @@ export default async function EditProduct({ params }: { params: { id: string } }
         </div>
 
         <div>
-          <div className="text-sm text-gray-400">Current preview</div>
-          {product.previewPdf && <a href={product.previewPdf} className="text-accent">Preview PDF</a>}
-          <input name="previewPdf" type="file" accept="application/pdf" className="block w-full max-w-full text-sm" />
-        </div>
-
-        <div>
           <label htmlFor="youtubeUrl" className="text-sm text-gray-400 block mb-1">YouTube video link (optional)</label>
           <input id="youtubeUrl" name="youtubeUrl" type="url" defaultValue={getYouTubeVideoId(product.previewMedia) ? product.previewMedia ?? '' : ''} placeholder="Paste a YouTube link, e.g. https://youtu.be/..." className="w-full min-w-0 px-3 py-2 bg-gray-800 rounded" />
           <p className="mt-1 text-xs text-gray-500">Paste the video link; you do not need to upload the video.</p>
@@ -61,7 +55,6 @@ export default async function EditProduct({ params }: { params: { id: string } }
           <input name="fullPdf" type="file" accept="application/pdf" className="block w-full max-w-full text-sm" />
         </div>
 
-        <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Featured</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="published" defaultChecked={product.published} /> Published</label>
 
         <button type="submit" className="w-full rounded bg-accent px-4 py-2 text-black sm:w-auto">Save Changes</button>

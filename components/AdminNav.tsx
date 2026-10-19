@@ -9,7 +9,7 @@ export default function AdminNav() {
           <Link href="/admin" className="text-gray-300 hover:text-accent">Dashboard</Link>
           <Link href="/admin/products" className="text-gray-300 hover:text-accent">Products</Link>
           <Link href="/admin/orders" className="text-gray-300 hover:text-accent">Orders</Link>
-          <Link href="/admin/settings" className="text-gray-300 hover:text-accent">Settings</Link>
+          <Link href="/admin/customers" className="text-gray-300 hover:text-accent">Customers</Link>
         </nav>
       </div>
     </header>

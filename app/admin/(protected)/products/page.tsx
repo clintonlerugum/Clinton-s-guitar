@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 function ProductActions({ id, published, hasPdf }: { id: string; published: boolean; hasPdf: boolean }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
       {hasPdf ? (
         <a href={'/api/admin/products/' + encodeURIComponent(id) + '/download'} className="rounded border border-accent px-2 py-1 text-sm text-accent hover:bg-accent hover:text-black">
           Download PDF
@@ -65,7 +65,7 @@ export default async function AdminProducts() {
             ))}
           </div>
 
-          <div className="hidden overflow-x-auto rounded bg-gray-900 md:block">
+          <div className="hidden -mx-4 w-[calc(100%_+_2rem)] overflow-x-auto rounded bg-gray-900 md:block">
             <table className="w-full min-w-[760px] table-auto">
               <thead className="bg-gray-800">
                 <tr>
@@ -79,13 +79,13 @@ export default async function AdminProducts() {
               </thead>
               <tbody>
                 {products.map((product) => (
-                  <tr key={product.id} className="border-t border-gray-800">
-                    <td className="p-3"><img src={product.coverImage ?? '/placeholders/cover1.jpg'} alt={product.title + ' cover'} className="w-16 rounded" /></td>
-                    <td className="max-w-56 break-words p-3">{product.title}</td>
-                    <td className="max-w-48 break-words p-3">{product.artist}</td>
-                    <td className="whitespace-nowrap p-3">{product.currency} {product.price}</td>
-                    <td className="whitespace-nowrap p-3">{product.published ? 'Published' : 'Draft'}</td>
-                    <td className="p-3"><ProductActions id={product.id} published={product.published} hasPdf={Boolean(product.fullPdf)} /></td>
+                  <tr key={product.id} className="h-14 border-t border-gray-800">
+                    <td className="p-2 align-middle"><img src={product.coverImage ?? '/placeholders/cover1.jpg'} alt={product.title + ' cover'} className="h-9 w-8 rounded object-contain" /></td>
+                    <td className="max-w-56 truncate p-2 align-middle">{product.title}</td>
+                    <td className="max-w-48 truncate p-2 align-middle">{product.artist}</td>
+                    <td className="whitespace-nowrap p-2 align-middle">{product.currency} {product.price}</td>
+                    <td className="whitespace-nowrap p-2 align-middle">{product.published ? 'Published' : 'Draft'}</td>
+                    <td className="p-2 align-middle"><ProductActions id={product.id} published={product.published} hasPdf={Boolean(product.fullPdf)} /></td>
                   </tr>
                 ))}
               </tbody>
