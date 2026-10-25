@@ -11,6 +11,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: any }) {
   return (
     <html lang="en">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: "(function(){try{var theme=localStorage.getItem('clintons-guitar-theme');document.documentElement.dataset.theme=theme==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}})();" }} />
+      </head>
       <body>
         <Navbar />
         <main className="container py-8">{children}</main>
