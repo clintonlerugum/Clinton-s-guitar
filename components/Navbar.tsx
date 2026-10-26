@@ -56,7 +56,6 @@ export default function Navbar() {
           <Link href="/">Home</Link>
           <Link href="/shop">Shop</Link>
           <Link href="/about">About</Link>
-          <Link href="/contact">Contact</Link>
           <Link href="/cart" className="cart-link">
             Cart
             <span className="cart-badge" aria-label={`Cart has ${cartCount} item${cartCount === 1 ? '' : 's'}`}>{cartCount}</span>
@@ -88,7 +87,6 @@ export default function Navbar() {
             <Link href="/" onClick={() => setOpen(false)}>Home</Link>
             <Link href="/shop" onClick={() => setOpen(false)}>Shop</Link>
             <Link href="/about" onClick={() => setOpen(false)}>About</Link>
-            <Link href="/contact" onClick={() => setOpen(false)}>Contact</Link>
             <Link href="/cart" onClick={() => setOpen(false)}>Cart ({cartCount})</Link>
             <Link href="/account" onClick={() => setOpen(false)}>Account</Link>
             <div className="mobile-account-settings">
