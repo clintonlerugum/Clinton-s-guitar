@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 type ProductListItem = {
   id: string
@@ -42,13 +42,12 @@ function ProductActions({ id, published, hasPdf }: { id: string; published: bool
 
 export default function AdminProductsList({ products }: { products: ProductListItem[] }) {
   const [search, setSearch] = useState('')
-  const filteredProducts = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase()
-    if (!query) return products
-    return products.filter((product) =>
-      `${product.title} ${product.artist} ${product.slug}`.toLocaleLowerCase().includes(query)
-    )
-  }, [products, search])
+  const query = search.trim().toLocaleLowerCase()
+  const filteredProducts = query
+    ? products.filter((product) =>
+        `${product.title} ${product.artist} ${product.slug}`.toLocaleLowerCase().includes(query)
+      )
+    : products
 
   return (
     <>
