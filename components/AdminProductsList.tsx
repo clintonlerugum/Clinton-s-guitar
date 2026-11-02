@@ -20,7 +20,7 @@ function ProductActions({ id, published, hasPdf }: { id: string; published: bool
     <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
       {hasPdf ? (
         <a href={'/api/admin/products/' + encodeURIComponent(id) + '/download'} className="rounded border border-accent px-2 py-1 text-sm text-accent hover:bg-accent hover:text-black">
-          Download PDF
+          Download
         </a>
       ) : (
         <span aria-disabled="true" title="Upload a full PDF to enable download" className="cursor-not-allowed rounded border border-gray-700 px-2 py-1 text-sm text-gray-500">
