@@ -123,7 +123,7 @@ export default async function AccountPage({ searchParams }: { searchParams?: { p
                 <div className="break-words font-semibold">{download.product.title}</div>
                 <div className="break-words text-sm text-gray-400">{download.product.artist}</div>
               </div>
-              <a href={'/api/download/' + encodeURIComponent(download.productId)} className="w-full rounded bg-accent px-3 py-2 text-center text-black sm:w-auto">Download</a>
+              <a href={'/api/download/' + encodeURIComponent(download.productId)} className="w-full rounded bg-accent px-3 py-2 text-center text-black sm:w-auto">{download.product.fullMuseScore ? 'Download ZIP' : 'Download PDF'}</a>
             </li>
           ))}
         </ul>

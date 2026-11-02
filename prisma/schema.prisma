@@ -37,6 +37,7 @@ model Product {
   previewPdf  String?
   previewMedia String?
   fullPdf     String?
+  fullMuseScore String?
   featured    Boolean     @default(false)
   published   Boolean     @default(false)
   createdAt   DateTime    @default(now())

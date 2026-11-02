@@ -14,9 +14,7 @@ function encodeRfc5987(value: string) {
 }
 
 export function pdfDownloadHeaders(title: string, artist: string) {
-  let stem = [cleanFilenamePart(title), cleanFilenamePart(artist)].filter(Boolean).join(' - ')
-  if (!stem) stem = 'guitar-tab'
-  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i.test(stem)) stem = 'tab-' + stem
+  const stem = productDownloadStem(title, artist)
 
   const filename = stem + '.pdf'
   const asciiFallback = stem
@@ -33,4 +31,31 @@ export function pdfDownloadHeaders(title: string, artist: string) {
     'Content-Disposition': 'attachment; filename="' + asciiFallback + '.pdf"; filename*=UTF-8\'\'' + encodeRfc5987(filename),
     'Cache-Control': 'private, no-store'
   }
+}
+
+export function zipDownloadHeaders(title: string, artist: string) {
+  const stem = productDownloadStem(title, artist)
+  const filename = stem + '.zip'
+  const asciiFallback = stem
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x20-\x7e]/g, '_')
+    .replace(/[^a-zA-Z0-9 ._-]/g, '_')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[. ]+$/g, '') || 'guitar-tab'
+
+  return {
+    'Content-Type': 'application/zip',
+    'Content-Disposition': 'attachment; filename="' + asciiFallback + '.zip"; filename*=UTF-8\'\'' + encodeRfc5987(filename),
+    'Cache-Control': 'private, no-store',
+    'X-Content-Type-Options': 'nosniff'
+  }
+}
+
+export function productDownloadStem(title: string, artist: string) {
+  let stem = [cleanFilenamePart(title), cleanFilenamePart(artist)].filter(Boolean).join(' - ')
+  if (!stem) stem = 'guitar-tab'
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i.test(stem)) stem = 'tab-' + stem
+  return stem
 }

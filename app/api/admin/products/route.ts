@@ -39,11 +39,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'A tab with this slug already exists.' }, { status: 409 })
     }
 
-    const [coverImage, previewPdf, previewMedia, fullPdf] = await Promise.all([
+    const [coverImage, previewPdf, previewMedia, fullPdf, fullMuseScore] = await Promise.all([
       saveProductUpload(form.get('coverImage'), 'coverImage'),
       saveProductUpload(form.get('previewPdf'), 'previewPdf'),
       youtubeUrl ? Promise.resolve(youtubeUrl) : saveProductUpload(form.get('previewMedia'), 'previewMedia'),
-      saveProductUpload(form.get('fullPdf'), 'fullPdf')
+      saveProductUpload(form.get('fullPdf'), 'fullPdf'),
+      saveProductUpload(form.get('fullMuseScore'), 'fullMuseScore')
     ])
     await prisma.product.create({
       data: {
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
         previewPdf,
         previewMedia,
         fullPdf,
+        fullMuseScore,
         featured: form.get('featured') === 'on',
         published
       }
@@ -69,7 +71,7 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to create the tab.'
-    const status = message.startsWith('Unsupported ') || message.includes('maximum file size') ? 400 : 500
+    const status = message.startsWith('Unsupported ') || message.startsWith('The .ms') || message.includes('maximum file size') ? 400 : 500
     return NextResponse.json({ error: status === 400 ? message : 'Unable to create the tab. Check the product data and try again.' }, { status })
   }
 }

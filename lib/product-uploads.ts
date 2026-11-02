@@ -30,6 +30,18 @@ const uploadTypes = {
     mimeTypes: { 'application/pdf': 'pdf' },
     maxBytes: 100 * 1024 * 1024,
     public: false
+  },
+  fullMuseScore: {
+    mimeTypes: {
+      'application/zip': 'mscz',
+      'application/x-zip-compressed': 'mscz',
+      'application/octet-stream': 'mscz',
+      'application/vnd.musescore.score': 'mscz',
+      'application/xml': 'mscx',
+      'text/xml': 'mscx'
+    },
+    maxBytes: 4 * 1024 * 1024,
+    public: false
   }
 } as const
 
@@ -64,9 +76,29 @@ export async function saveProductUpload(value: FormDataEntryValue | null, field:
   if (!(value instanceof File) || value.size === 0) return null
 
   const config = uploadTypes[field]
-  const extension = config.mimeTypes[value.type as keyof typeof config.mimeTypes]
+  let extension: string | undefined
+  if (field === 'fullMuseScore') {
+    const fileExtension = /\.(mscz|mscx)$/i.exec(value.name)?.[1]?.toLowerCase()
+    if (!fileExtension) throw new Error('Unsupported MuseScore file. Upload an .mscz or .mscx file.')
+    extension = fileExtension
+  } else {
+    extension = config.mimeTypes[value.type as keyof typeof config.mimeTypes]
+  }
   if (!extension) throw new Error(`Unsupported ${field} file type.`)
   if (value.size > config.maxBytes) throw new Error(`${field} exceeds the maximum file size.`)
+
+  const fileBytes = Buffer.from(await value.arrayBuffer())
+  if (field === 'fullMuseScore') {
+    if (extension === 'mscz' && (fileBytes.length < 4 || fileBytes.toString('ascii', 0, 2) !== 'PK')) {
+      throw new Error('The .mscz file is not a valid MuseScore score archive.')
+    }
+    if (extension === 'mscx') {
+      const xmlStart = fileBytes.subarray(0, 4096).toString('utf8').replace(/^\uFEFF/, '').trimStart()
+      if (!/^<\?xml[\s\S]*?<museScore\b|^<museScore\b/i.test(xmlStart)) {
+        throw new Error('The .mscx file is not a valid MuseScore score document.')
+      }
+    }
+  }
 
   const filename = `${randomUUID()}.${extension}`
   const { baseUrl, secretKey } = getStorageConfig()
@@ -77,10 +109,10 @@ export async function saveProductUpload(value: FormDataEntryValue | null, field:
     headers: {
       apikey: secretKey,
       Authorization: `Bearer ${secretKey}`,
-      'Content-Type': value.type,
+      'Content-Type': value.type || (field === 'fullMuseScore' && extension === 'mscz' ? 'application/zip' : 'application/octet-stream'),
       'x-upsert': 'false'
     },
-    body: Buffer.from(await value.arrayBuffer()),
+    body: fileBytes,
     signal: AbortSignal.timeout(15_000)
   })
   if (!response.ok) {
@@ -100,7 +132,7 @@ export function resolveProtectedPdfPath(filePath: string) {
   return resolvedPath
 }
 
-export async function readProtectedPdf(filePath: string) {
+export async function readProtectedFile(filePath: string) {
   if (filePath.startsWith('supabase://')) {
     const match = /^supabase:\/\/([^/]+)\/(.+)$/.exec(filePath)
     if (!match || match[1] !== protectedBucket || match[2].split('/').some((part) => !part || part === '.' || part === '..')) {
@@ -128,6 +160,10 @@ export async function readProtectedPdf(filePath: string) {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') return null
     throw error
   }
+}
+
+export async function readProtectedPdf(filePath: string) {
+  return readProtectedFile(filePath)
 }
 
 export function normalizeProductSlug(value: string) {

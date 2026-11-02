@@ -55,6 +55,14 @@ export default async function EditProduct({ params }: { params: { id: string } }
           <input name="fullPdf" type="file" accept="application/pdf" className="block w-full max-w-full text-sm" />
         </div>
 
+        <div>
+          <label htmlFor="fullMuseScore" className="text-sm text-gray-400 block mb-1">MuseScore file (protected, optional)</label>
+          {product.fullMuseScore && <div className="text-sm text-gray-400">Uploaded (protected). Upload a new file to replace it.</div>}
+          {!product.fullMuseScore && <div className="text-sm text-gray-400">No MuseScore file uploaded yet.</div>}
+          <input id="fullMuseScore" name="fullMuseScore" type="file" accept=".mscz,.mscx" className="block w-full max-w-full text-sm" />
+          <p className="mt-1 text-xs text-gray-500">Only .mscz and .mscx files are accepted (maximum 4 MB).</p>
+        </div>
+
         <label className="flex items-center gap-2"><input type="checkbox" name="published" defaultChecked={product.published} /> Published</label>
 
         <button type="submit" className="w-full rounded bg-accent px-4 py-2 text-black sm:w-auto">Save Changes</button>
