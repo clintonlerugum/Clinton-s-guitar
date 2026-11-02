@@ -72,7 +72,12 @@ export async function POST(req: Request, { params }: any) {
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to update the tab.'
-    const status = message.startsWith('Unsupported ') || message.startsWith('The .ms') || message.includes('maximum file size') ? 400 : 500
+    const errorCode = typeof error === 'object' && error !== null && 'code' in error ? error.code : null
+    if (errorCode === 'P2022') {
+      return NextResponse.json({ error: 'The database is missing a product column required by this update. Confirm the MuseScore SQL update was run on the database used by this website.' }, { status: 500 })
+    }
+    const storageRejectedUpload = /^Supabase Storage upload failed with HTTP 4\d\d/.test(message)
+    const status = message.startsWith('Unsupported ') || message.startsWith('The .ms') || message.includes('maximum file size') || storageRejectedUpload ? 400 : 500
     return NextResponse.json({ error: status === 400 ? message : 'Unable to update the tab. Check the product data and try again.' }, { status })
   }
 }

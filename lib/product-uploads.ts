@@ -104,19 +104,30 @@ export async function saveProductUpload(value: FormDataEntryValue | null, field:
   const { baseUrl, secretKey } = getStorageConfig()
   const bucket = config.public ? publicBucket : protectedBucket
   const objectPath = `${field}/${filename}`
+  const contentType = field === 'fullMuseScore'
+    ? extension === 'mscz' ? 'application/zip' : 'application/xml'
+    : value.type
   const response = await fetch(`${baseUrl}/storage/v1/object/${bucket}/${encodeObjectPath(objectPath)}`, {
     method: 'POST',
     headers: {
       apikey: secretKey,
       Authorization: `Bearer ${secretKey}`,
-      'Content-Type': value.type || (field === 'fullMuseScore' && extension === 'mscz' ? 'application/zip' : 'application/octet-stream'),
+      'Content-Type': contentType,
       'x-upsert': 'false'
     },
     body: fileBytes,
     signal: AbortSignal.timeout(15_000)
   })
   if (!response.ok) {
-    throw new Error(`Supabase Storage upload failed with HTTP ${response.status}.`)
+    let detail = ''
+    try {
+      const responseBody = await response.json() as Record<string, unknown>
+      const reason = responseBody.message ?? responseBody.error ?? responseBody.msg
+      if (typeof reason === 'string') detail = `: ${reason.replace(/\s+/g, ' ').slice(0, 200)}`
+    } catch {
+      // Keep the response generic if Storage did not return a readable JSON error.
+    }
+    throw new Error(`Supabase Storage upload failed with HTTP ${response.status}${detail}.`)
   }
 
   return config.public
