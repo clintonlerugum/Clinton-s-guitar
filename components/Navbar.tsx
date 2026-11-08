@@ -1,5 +1,6 @@
 "use client"
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import * as React from 'react'
 import { parseCartCookie } from '../lib/cart'
 
@@ -15,25 +16,21 @@ function getCartCount() {
 }
 
 export default function Navbar() {
+  const pathname = usePathname()
   const [open, setOpen] = React.useState(false)
-  const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [cartCount, setCartCount] = React.useState(0)
-  const [theme, setTheme] = React.useState<'dark' | 'light'>('dark')
-
-  React.useEffect(() => {
-    setTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark')
-  }, [])
-
-  function toggleTheme() {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark'
-    document.documentElement.dataset.theme = nextTheme
-    try {
-      window.localStorage.setItem('clintons-guitar-theme', nextTheme)
-    } catch {
-      // Keep the switch usable when browser storage is unavailable.
-    }
-    setTheme(nextTheme)
-  }
+  const matchesRoute = (route: string) => pathname === route || pathname.startsWith(`${route}/`)
+  const activeHref = matchesRoute('/')
+    ? '/'
+    : matchesRoute('/shop') || pathname.startsWith('/tabs/')
+      ? '/shop'
+      : matchesRoute('/about')
+        ? '/about'
+        : matchesRoute('/cart') || pathname.startsWith('/checkout/')
+          ? '/cart'
+          : ['/account', '/login', '/register'].some(matchesRoute)
+            ? '/account'
+            : null
 
   React.useEffect(() => {
     const updateCartCount = () => setCartCount(getCartCount())
@@ -53,27 +50,22 @@ export default function Navbar() {
         <Link href="/" className="logo-link" onClick={() => setOpen(false)}>Clinton&apos;s Guitar</Link>
 
         <nav className="desktop-nav">
-          <Link href="/">Home</Link>
-          <Link href="/shop">Shop</Link>
-          <Link href="/about">About</Link>
-          <Link href="/cart" className="cart-link">
-            Cart
-            <span className="cart-badge" aria-label={`Cart has ${cartCount} item${cartCount === 1 ? '' : 's'}`}>{cartCount}</span>
+          <Link href="/" className={activeHref === '/' ? 'active' : undefined} aria-current={activeHref === '/' ? 'page' : undefined}>Home</Link>
+          <Link href="/shop" className={activeHref === '/shop' ? 'active' : undefined} aria-current={activeHref === '/shop' ? 'page' : undefined}>Shop</Link>
+          <Link href="/about" className={activeHref === '/about' ? 'active' : undefined} aria-current={activeHref === '/about' ? 'page' : undefined}>About</Link>
+          <Link href="/account" className={`nav-icon-link nav-account-link${activeHref === '/account' ? ' active' : ''}`} aria-current={activeHref === '/account' ? 'page' : undefined}>
+            <svg className="nav-account-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5Z" /></svg>
+            <span>Account</span>
           </Link>
-          <div className="account-settings">
-            <Link href="/account">Account</Link>
-            <button type="button" className="settings-icon-button" onClick={() => setSettingsOpen(!settingsOpen)} aria-label="Open appearance settings" aria-expanded={settingsOpen}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Zm8.1 4.9a8.4 8.4 0 0 0 0-2.2l1.6-1.2-1.6-2.8-1.9.7a8 8 0 0 0-1.9-1.1L16 4.5h-3.2l-.4 2a8 8 0 0 0-2.1 0l-.9-1.8-2.8 1.6.7 1.9a8 8 0 0 0-1.1 1.9l-2 .3v3.2l2 .4a8 8 0 0 0 1.1 1.9l-.7 1.9 2.8 1.6.9-1.8a8 8 0 0 0 2.1 0l.4 2H16l.3-2a8 8 0 0 0 1.9-1.1l1.9.7 1.6-2.8-1.6-1.2Z" /></svg>
-            </button>
-            {settingsOpen && (
-              <div className="settings-menu">
-                <span className="settings-menu-title">Appearance</span>
-                <button type="button" className="theme-toggle" onClick={() => { toggleTheme(); setSettingsOpen(false) }}>
-                  {theme === 'dark' ? '☀ Switch to bright mode' : '☾ Switch to dark mode'}
-                </button>
-              </div>
-            )}
-          </div>
+          <Link
+            href="/cart"
+            className={`nav-icon-link nav-cart-link${activeHref === '/cart' ? ' active' : ''}`}
+            aria-label={`Shopping cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
+            aria-current={activeHref === '/cart' ? 'page' : undefined}
+          >
+            <svg className="nav-cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 12.1a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 1.9-1.4L22 8H6M10 21a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm8 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" /></svg>
+            <span className="cart-badge" aria-hidden="true">{cartCount}</span>
+          </Link>
         </nav>
 
         <button className="mobile-menu-button" onClick={() => setOpen(!open)} aria-label="Toggle menu">
@@ -84,25 +76,24 @@ export default function Navbar() {
       {open && (
         <div className="mobile-nav">
           <div className="container">
-            <Link href="/" onClick={() => setOpen(false)}>Home</Link>
-            <Link href="/shop" onClick={() => setOpen(false)}>Shop</Link>
-            <Link href="/about" onClick={() => setOpen(false)}>About</Link>
-            <Link href="/cart" onClick={() => setOpen(false)}>Cart ({cartCount})</Link>
-            <Link href="/account" onClick={() => setOpen(false)}>Account</Link>
-            <div className="mobile-account-settings">
-              <button type="button" className="settings-icon-button" onClick={() => setSettingsOpen(!settingsOpen)} aria-label="Open appearance settings" aria-expanded={settingsOpen}>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Zm8.1 4.9a8.4 8.4 0 0 0 0-2.2l1.6-1.2-1.6-2.8-1.9.7a8 8 0 0 0-1.9-1.1L16 4.5h-3.2l-.4 2a8 8 0 0 0-2.1 0l-.9-1.8-2.8 1.6.7 1.9a8 8 0 0 0-1.1 1.9l-2 .3v3.2l2 .4a8 8 0 0 0 1.1 1.9l-.7 1.9 2.8 1.6.9-1.8a8 8 0 0 0 2.1 0l.4 2H16l.3-2a8 8 0 0 0 1.9-1.1l1.9.7 1.6-2.8-1.6-1.2Z" /></svg>
-                <span>Settings</span>
-              </button>
-              {settingsOpen && (
-                <div className="settings-menu mobile-settings-menu">
-                  <span className="settings-menu-title">Appearance</span>
-                  <button type="button" className="theme-toggle" onClick={() => { toggleTheme(); setSettingsOpen(false) }}>
-                    {theme === 'dark' ? '☀ Switch to bright mode' : '☾ Switch to dark mode'}
-                  </button>
-                </div>
-              )}
-            </div>
+            <Link href="/" className={activeHref === '/' ? 'active' : undefined} aria-current={activeHref === '/' ? 'page' : undefined} onClick={() => setOpen(false)}>Home</Link>
+            <Link href="/shop" className={activeHref === '/shop' ? 'active' : undefined} aria-current={activeHref === '/shop' ? 'page' : undefined} onClick={() => setOpen(false)}>Shop</Link>
+            <Link href="/about" className={activeHref === '/about' ? 'active' : undefined} aria-current={activeHref === '/about' ? 'page' : undefined} onClick={() => setOpen(false)}>About</Link>
+            <Link href="/account" className={`nav-icon-link nav-account-link${activeHref === '/account' ? ' active' : ''}`} aria-current={activeHref === '/account' ? 'page' : undefined} onClick={() => setOpen(false)}>
+              <svg className="nav-account-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5Z" /></svg>
+              <span>Account</span>
+            </Link>
+            <Link
+              href="/cart"
+              className={`nav-icon-link nav-cart-link${activeHref === '/cart' ? ' active' : ''}`}
+              aria-label={`Shopping cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
+              aria-current={activeHref === '/cart' ? 'page' : undefined}
+              onClick={() => setOpen(false)}
+            >
+              <svg className="nav-cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l2.4 12.1a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 1.9-1.4L22 8H6M10 21a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm8 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" /></svg>
+              <span className="cart-badge" aria-hidden="true">{cartCount}</span>
+              <span>Cart</span>
+            </Link>
           </div>
         </div>
       )}
