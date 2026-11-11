@@ -21,6 +21,10 @@ export async function POST(req: Request) {
     const price = Number(priceValue)
     const difficulty = String(form.get('difficulty') ?? '')
     const youtubeUrl = String(form.get('youtubeUrl') ?? '').trim()
+    const categoryIds = Array.from(new Set(form.getAll('categoryIds')
+      .filter((value): value is string => typeof value === 'string')
+      .map((value) => value.trim())
+      .filter(Boolean)))
     const published = form.get('published') === 'on'
     const fullPdfUpload = form.get('fullPdf')
     if (!title || !artist || !slug || !/^\d+$/.test(priceValue) || !Number.isSafeInteger(price) || price < 1) {
@@ -34,6 +38,9 @@ export async function POST(req: Request) {
     }
     if (youtubeUrl && !getYouTubeVideoId(youtubeUrl)) {
       return NextResponse.json({ error: 'Enter a valid YouTube video link.' }, { status: 400 })
+    }
+    if (categoryIds.length && await prisma.category.count({ where: { id: { in: categoryIds } } }) !== categoryIds.length) {
+      return NextResponse.json({ error: 'One or more selected categories no longer exist. Refresh the form and try again.' }, { status: 400 })
     }
     if (await prisma.product.findUnique({ where: { slug } })) {
       return NextResponse.json({ error: 'A tab with this slug already exists.' }, { status: 409 })
@@ -61,7 +68,10 @@ export async function POST(req: Request) {
         fullPdf,
         fullMuseScore,
         featured: form.get('featured') === 'on',
-        published
+        published,
+        categories: {
+          create: categoryIds.map((categoryId) => ({ category: { connect: { id: categoryId } } }))
+        }
       }
     })
 

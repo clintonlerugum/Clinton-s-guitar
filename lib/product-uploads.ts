@@ -8,6 +8,11 @@ const uploadTypes = {
     maxBytes: 8 * 1024 * 1024,
     public: true
   },
+  categoryImage: {
+    mimeTypes: { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' },
+    maxBytes: 8 * 1024 * 1024,
+    public: true
+  },
   previewPdf: {
     mimeTypes: { 'application/pdf': 'pdf' },
     maxBytes: 20 * 1024 * 1024,

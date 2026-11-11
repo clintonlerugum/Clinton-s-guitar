@@ -16,6 +16,7 @@ export default async function AdminProducts() {
         price: product.price,
         currency: product.currency,
         published: product.published,
+        featured: product.featured,
         coverImage: product.coverImage,
         fullPdf: product.fullPdf
       }))} />

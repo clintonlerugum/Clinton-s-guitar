@@ -2,7 +2,10 @@ import { prisma } from '../../../../../../lib/prisma'
 import { getYouTubeVideoId } from '../../../../../../lib/youtube'
 
 export default async function EditProduct({ params }: { params: { id: string } }) {
-  const product = await prisma.product.findUnique({ where: { id: params.id } })
+  const [product, categories] = await Promise.all([
+    prisma.product.findUnique({ where: { id: params.id }, include: { categories: { select: { categoryId: true } } } }),
+    prisma.category.findMany({ orderBy: [{ active: 'desc' }, { name: 'asc' }] }),
+  ])
   if (!product) return <div>Product not found</div>
 
   return (
@@ -30,6 +33,16 @@ export default async function EditProduct({ params }: { params: { id: string } }
             <option value="Advanced">Advanced</option>
           </select>
         </div>
+        <fieldset className="admin-product-categories">
+          <legend>Categories <span>(select all that apply)</span></legend>
+          {categories.length ? categories.map((category) => (
+            <label key={category.id}>
+              <input type="checkbox" name="categoryIds" value={category.id} defaultChecked={product.categories.some((assignment) => assignment.categoryId === category.id)} />
+              <span>{category.name}</span>
+              {!category.active && <small>Inactive</small>}
+            </label>
+          )) : <p>No categories yet. Create categories in Admin → Categories.</p>}
+        </fieldset>
 
         <div>
           <div className="text-sm text-gray-400">Current cover</div>
@@ -63,6 +76,7 @@ export default async function EditProduct({ params }: { params: { id: string } }
           <p className="mt-1 text-xs text-gray-500">Only .mscz and .mscx files are accepted (maximum 4 MB).</p>
         </div>
 
+        <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Feature on homepage</label>
         <label className="flex items-center gap-2"><input type="checkbox" name="published" defaultChecked={product.published} /> Published</label>
 
         <button type="submit" className="w-full rounded bg-accent px-4 py-2 text-black sm:w-auto">Save Changes</button>

@@ -11,11 +11,12 @@ type ProductListItem = {
   price: number
   currency: string
   published: boolean
+  featured: boolean
   coverImage: string | null
   fullPdf: string | null
 }
 
-function ProductActions({ id, published, hasPdf }: { id: string; published: boolean; hasPdf: boolean }) {
+function ProductActions({ id, published, featured, hasPdf }: { id: string; published: boolean; featured: boolean; hasPdf: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
       {hasPdf ? (
@@ -31,6 +32,10 @@ function ProductActions({ id, published, hasPdf }: { id: string; published: bool
       <form action="/api/admin/products/action" method="post">
         <input type="hidden" name="id" value={id} />
         <button name="_action" value="toggle" className="rounded border px-2 py-1 text-sm">{published ? 'Unpublish' : 'Publish'}</button>
+      </form>
+      <form action="/api/admin/products/action" method="post">
+        <input type="hidden" name="id" value={id} />
+        <button name="_action" value="feature" className="rounded border border-accent px-2 py-1 text-sm text-accent">{featured ? 'Remove Featured' : 'Feature'}</button>
       </form>
       <form action="/api/admin/products/action" method="post">
         <input type="hidden" name="id" value={id} />
@@ -97,11 +102,11 @@ export default function AdminProductsList({ products }: { products: ProductListI
                     <h2 className="break-words font-semibold">{product.title}</h2>
                     <p className="break-words text-sm text-gray-400">{product.artist}</p>
                     <p className="mt-1 text-sm">{product.currency} {product.price}</p>
-                    <p className="text-sm text-gray-400">{product.published ? 'Published' : 'Draft'}</p>
+                    <p className="text-sm text-gray-400">{product.published ? 'Published' : 'Draft'}{product.featured ? ' · Featured' : ''}</p>
                   </div>
                 </div>
                 <div className="mt-3 border-t border-gray-800 pt-3">
-                  <ProductActions id={product.id} published={product.published} hasPdf={Boolean(product.fullPdf)} />
+                  <ProductActions id={product.id} published={product.published} featured={product.featured} hasPdf={Boolean(product.fullPdf)} />
                 </div>
               </article>
             ))}
@@ -116,6 +121,7 @@ export default function AdminProductsList({ products }: { products: ProductListI
                   <th className="p-3 text-left">Artist</th>
                   <th className="p-3 text-left">Price</th>
                   <th className="p-3 text-left">Status</th>
+                  <th className="p-3 text-left">Featured</th>
                   <th className="p-3 text-left">Actions</th>
                 </tr>
               </thead>
@@ -127,7 +133,8 @@ export default function AdminProductsList({ products }: { products: ProductListI
                     <td className="max-w-48 truncate p-2 align-middle">{product.artist}</td>
                     <td className="whitespace-nowrap p-2 align-middle">{product.currency} {product.price}</td>
                     <td className="whitespace-nowrap p-2 align-middle">{product.published ? 'Published' : 'Draft'}</td>
-                    <td className="p-2 align-middle"><ProductActions id={product.id} published={product.published} hasPdf={Boolean(product.fullPdf)} /></td>
+                    <td className="whitespace-nowrap p-2 align-middle">{product.featured ? 'Featured' : '—'}</td>
+                    <td className="p-2 align-middle"><ProductActions id={product.id} published={product.published} featured={product.featured} hasPdf={Boolean(product.fullPdf)} /></td>
                   </tr>
                 ))}
               </tbody>

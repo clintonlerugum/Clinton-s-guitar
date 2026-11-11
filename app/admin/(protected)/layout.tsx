@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { getTokenFromCookies, verifyToken } from '../../../lib/auth'
+import AdminNav from '../../../components/AdminNav'
 
 export default function ProtectedAdminLayout({ children }: { children: ReactNode }) {
   const token = getTokenFromCookies()
@@ -15,5 +16,12 @@ export default function ProtectedAdminLayout({ children }: { children: ReactNode
     )
   }
 
-  return <div className="container min-w-0 py-6 sm:py-8">{children}</div>
+  return (
+    <div className="admin-shell">
+      <AdminNav />
+      <main className="admin-main">
+        <div className="admin-content">{children}</div>
+      </main>
+    </div>
+  )
 }

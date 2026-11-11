@@ -21,6 +21,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Upload the protected full PDF before publishing this tab.' }, { status: 400 })
     }
     await prisma.product.update({ where: { id }, data: { published: !p.published } })
+  } else if (action === 'feature') {
+    const product = await prisma.product.findUnique({ where: { id }, select: { featured: true } })
+    if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    await prisma.product.update({ where: { id }, data: { featured: !product.featured } })
   } else {
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   }

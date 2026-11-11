@@ -34,29 +34,39 @@ export default function CartItemControls({ productId, title, quantity }: {
   }
 
   return (
-    <>
-      <div className="flex items-center justify-end gap-2 text-sm text-gray-400">
+    <div className="cart-item-control-wrap">
+      <div className="cart-item-controls">
         <button
+          className="quantity-button"
           type="button"
           aria-label={`Decrease quantity of ${title}`}
           disabled={updating || quantity <= 1}
           onClick={() => updateCart('decrease')}
-        >-</button>
-        <span>Qty: {quantity}</span>
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12" /></svg>
+        </button>
+        <span className="quantity-value" aria-live="polite">{quantity}</span>
         <button
+          className="quantity-button"
           type="button"
           aria-label={`Increase quantity of ${title}`}
           disabled={updating}
           onClick={() => updateCart('increase')}
-        >+</button>
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" /></svg>
+        </button>
         <button
+          className="cart-remove-button"
           type="button"
           aria-label={`Remove ${title} from cart`}
           disabled={updating}
           onClick={() => updateCart('remove')}
-        >Remove</button>
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5h13M8 5.5V3.8h4v1.7m-6.5 0 .7 11h7.6l.7-11M8.2 8.5v5.5m3.6-5.5v5.5" /></svg>
+          <span className="sr-only">Remove</span>
+        </button>
       </div>
-      {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-    </>
+      {error && <p role="alert" className="cart-item-error">{error}</p>}
+    </div>
   )
 }

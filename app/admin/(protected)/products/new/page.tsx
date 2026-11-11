@@ -1,6 +1,9 @@
 import React from 'react'
+import { prisma } from '../../../../../lib/prisma'
 
-export default function NewProductPage() {
+export default async function NewProductPage() {
+  const categories = await prisma.category.findMany({ orderBy: [{ active: 'desc' }, { name: 'asc' }] })
+
   return (
     <section>
       <h1 className="text-2xl font-bold mb-4">Add New Tab</h1>
@@ -23,6 +26,16 @@ export default function NewProductPage() {
             <option value="Advanced">Advanced</option>
           </select>
         </div>
+        <fieldset className="admin-product-categories">
+          <legend>Categories <span>(optional; select all that apply)</span></legend>
+          {categories.length ? categories.map((category) => (
+            <label key={category.id}>
+              <input type="checkbox" name="categoryIds" value={category.id} />
+              <span>{category.name}</span>
+              {!category.active && <small>Inactive</small>}
+            </label>
+          )) : <p>No categories yet. Create categories in Admin → Categories.</p>}
+        </fieldset>
 
         <div>
           <label className="text-sm text-gray-400 block mb-1">Cover Image</label>
