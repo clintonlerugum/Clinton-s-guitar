@@ -4,6 +4,7 @@ import { prisma } from '../../../../lib/prisma'
 import { readProtectedFile, readProtectedPdf } from '../../../../lib/product-uploads'
 import { pdfDownloadHeaders, productDownloadStem, zipDownloadHeaders } from '../../../../lib/download-filename'
 import { createZipArchive } from '../../../../lib/zip'
+import { getStoreSettings } from '../../../../lib/store-settings'
 
 export async function GET(_req: Request, { params }: any) {
   const token = getTokenFromCookies()
@@ -13,14 +14,22 @@ export async function GET(_req: Request, { params }: any) {
   }
 
   const productId = params.productId
-  const hasPaidOrder = await prisma.order.findFirst({
+  const paidOrder = await prisma.order.findFirst({
     where: {
       userId: data.id,
       status: 'PAID',
       items: { some: { productId } }
-    }
+    },
+    orderBy: { createdAt: 'desc' },
+    include: { payment: { select: { updatedAt: true } } },
   })
-  if (!hasPaidOrder) return NextResponse.json({ error: 'Payment not confirmed' }, { status: 403 })
+  if (!paidOrder) return NextResponse.json({ error: 'Payment not confirmed' }, { status: 403 })
+
+  const settings = await getStoreSettings()
+  if (settings.downloadExpiryDays > 0) {
+    const expiresAt = (paidOrder.payment?.updatedAt ?? paidOrder.createdAt).getTime() + settings.downloadExpiryDays * 24 * 60 * 60 * 1000
+    if (Date.now() >= expiresAt) return NextResponse.json({ error: 'Download access has expired.' }, { status: 403 })
+  }
 
   const product = await prisma.product.findUnique({ where: { id: productId } })
   if (!product || !product.fullPdf) return NextResponse.json({ error: 'File not found' }, { status: 404 })
@@ -38,8 +47,30 @@ export async function GET(_req: Request, { params }: any) {
       { name: `${stem}.pdf`, contents: file },
       { name: `${stem}.${extension}`, contents: museScoreFile }
     ])
-    return new NextResponse(archive, { headers: zipDownloadHeaders(product.title, product.artist) })
+    const download = new NextResponse(archive, { headers: zipDownloadHeaders(product.title, product.artist) })
+    const attempt = await consumeDownloadAttempt(data.id, productId, settings.maxDownloadAttempts, settings.allowRedownload)
+    if (!attempt) return NextResponse.json({ error: settings.allowRedownload ? 'Maximum download attempts reached.' : 'Redownloads are disabled for this purchase.' }, { status: settings.allowRedownload ? 429 : 403 })
+    return download
   }
 
-  return new NextResponse(file, { headers: pdfDownloadHeaders(product.title, product.artist) })
+  const download = new NextResponse(file, { headers: pdfDownloadHeaders(product.title, product.artist) })
+  const attempt = await consumeDownloadAttempt(data.id, productId, settings.maxDownloadAttempts, settings.allowRedownload)
+  if (!attempt) return NextResponse.json({ error: settings.allowRedownload ? 'Maximum download attempts reached.' : 'Redownloads are disabled for this purchase.' }, { status: settings.allowRedownload ? 429 : 403 })
+  return download
+}
+
+async function consumeDownloadAttempt(userId: string, productId: string, maximum: number, allowRedownload: boolean) {
+  await prisma.download.upsert({
+    where: { user_product_download: { userId, productId } },
+    create: { userId, productId },
+    update: {},
+  })
+  return (await prisma.download.updateMany({
+    where: {
+      userId,
+      productId,
+      ...(allowRedownload ? maximum > 0 ? { attempts: { lt: maximum } } : {} : { attempts: 0 }),
+    },
+    data: { attempts: { increment: 1 } },
+  })).count === 1
 }

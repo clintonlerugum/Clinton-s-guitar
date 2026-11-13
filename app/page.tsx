@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { prisma } from '../lib/prisma'
 import ProductCard from '../components/ProductCard'
 import HomeRevealController from '../components/HomeRevealController'
+import StoreMaintenanceNotice from '../components/StoreMaintenanceNotice'
+import { getStoreSettings } from '../lib/store-settings'
+import { getTokenFromCookies, verifyToken } from '../lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +28,11 @@ function LineIcon({ name }: { name: 'music' | 'download' | 'levels' | 'secure' |
 }
 
 export default async function Home() {
+  const settings = await getStoreSettings()
+  const identity = verifyToken(getTokenFromCookies())
+  const isAdmin = Boolean(identity && typeof identity === 'object' && identity.role === 'ADMIN')
+  if (settings.maintenanceMode && !isAdmin) return <StoreMaintenanceNotice />
+
   const visibleProduct = { published: true, fullPdf: { not: null } }
   const [latest, featured, categories] = await Promise.all([
     prisma.product.findMany({
@@ -71,9 +79,12 @@ export default async function Home() {
   return (
     <section className="home-page">
       <HomeRevealController />
+      {settings.announcementVisible && settings.announcement && (
+        <aside className="store-announcement" role="status">{settings.announcement}</aside>
+      )}
       <div className="hero home-hero">
         <div className="home-hero-content">
-          <span className="home-hero-eyebrow"><span /> Clinton&apos;s Guitar · Premium arrangements</span>
+          <span className="home-hero-eyebrow"><span /> {settings.storeName} · Premium arrangements</span>
           <h1>The Art of Guitar,<br className="home-hero-break" /> Beautifully Arranged.</h1>
           <p>Thoughtfully arranged guitar music for the songs you love. Explore clear, beautifully presented tabs made for your next moment of music.</p>
           <div className="home-hero-actions">
@@ -84,7 +95,7 @@ export default async function Home() {
         <a href="#latest-tabs" className="home-scroll-cue" aria-label="Scroll to latest guitar tabs"><span /></a>
       </div>
 
-      <section className="home-section home-section-latest home-reveal" id="latest-tabs" aria-labelledby="latest-tabs-title">
+      {settings.showLatest && <section className="home-section home-section-latest home-reveal" id="latest-tabs" aria-labelledby="latest-tabs-title">
         <div className="home-section-heading">
           <div>
             <span className="home-eyebrow">From the collection</span>
@@ -100,9 +111,9 @@ export default async function Home() {
         ) : (
           <p className="home-empty-note">New guitar arrangements are on their way. Please check back soon.</p>
         )}
-      </section>
+      </section>}
 
-      <section className="home-section home-featured-section home-reveal" aria-labelledby="home-featured-title">
+      {settings.showFeatured && <section className="home-section home-featured-section home-reveal" aria-labelledby="home-featured-title">
         <div className="home-section-heading">
           <div>
             <span className="home-eyebrow">Handpicked for you</span>
@@ -112,14 +123,14 @@ export default async function Home() {
         </div>
         {featured.length > 0 ? (
           <div className="product-grid latest-products home-featured-products">
-            {featured.map((product) => <ProductCard key={product.id} product={product} showDifficulty actions featuredBadge />)}
+            {featured.map((product) => <ProductCard key={product.id} product={product} showDifficulty actions showActions={false} featuredBadge />)}
           </div>
         ) : (
           <p className="home-empty-note">Featured arrangements will appear here as they are selected.</p>
         )}
-      </section>
+      </section>}
 
-      {categories.length > 0 && (
+      {settings.showCategories && categories.length > 0 && (
         <section className="home-section home-category-section home-reveal" aria-labelledby="home-categories-title">
           <div className="home-section-heading">
             <div>
@@ -147,7 +158,7 @@ export default async function Home() {
         </section>
       )}
 
-      <section className="home-section home-benefits-section home-reveal" aria-labelledby="home-benefits-title">
+      {settings.showBenefits && <section className="home-section home-benefits-section home-reveal" aria-labelledby="home-benefits-title">
         <div className="home-section-heading home-section-heading-centered">
           <div>
             <span className="home-eyebrow">Made for music makers</span>
@@ -161,9 +172,9 @@ export default async function Home() {
           <article className="home-benefit-card"><span><LineIcon name="levels" /></span><h3>For Every Journey</h3><p>Find arrangements with difficulty levels to guide your next step.</p></article>
           <article className="home-benefit-card"><span><LineIcon name="secure" /></span><h3>Convenient Checkout</h3><p>Complete your order securely with the available checkout options.</p></article>
         </div>
-      </section>
+      </section>}
 
-      <section className="home-section home-steps-section home-reveal" aria-labelledby="home-steps-title">
+      {settings.showHowItWorks && <section className="home-section home-steps-section home-reveal" aria-labelledby="home-steps-title">
         <div className="home-section-heading">
           <div>
             <span className="home-eyebrow">Four simple steps</span>
@@ -178,7 +189,7 @@ export default async function Home() {
           <li><span className="home-step-number">04</span><span className="home-step-icon"><LineIcon name="pdf" /></span><h3>Download your PDF</h3><p>Open your arrangement and start playing.</p></li>
         </ol>
         <Link href="/shop" className="btn btn-primary home-steps-cta">Find Your Next Arrangement <span aria-hidden="true">→</span></Link>
-      </section>
+      </section>}
     </section>
   )
 }

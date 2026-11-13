@@ -9,139 +9,205 @@ type ProductListItem = {
   artist: string
   slug: string
   price: number
-  currency: string
   published: boolean
   featured: boolean
+  difficulty: string | null
+  categories: string[]
   coverImage: string | null
   fullPdf: string | null
+  createdAt: string
 }
 
-function ProductActions({ id, published, featured, hasPdf }: { id: string; published: boolean; featured: boolean; hasPdf: boolean }) {
+const notices: Record<string, string> = {
+  created: 'Product created successfully.',
+  updated: 'Product changes saved successfully.',
+  published: 'Product published successfully.',
+  unpublished: 'Product unpublished successfully.',
+  featured: 'Product added to Featured Arrangements.',
+  unfeatured: 'Product removed from Featured Arrangements.',
+  deleted: 'Product deleted successfully.',
+}
+
+function ProductActions({ product }: { product: ProductListItem }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
-      {hasPdf ? (
-        <a href={'/api/admin/products/' + encodeURIComponent(id) + '/download'} className="rounded border border-accent px-2 py-1 text-sm text-accent hover:bg-accent hover:text-black">
-          Download
-        </a>
+    <div className="admin-products-actions">
+      {product.published && <Link href={`/tabs/${encodeURIComponent(product.slug)}`} className="admin-product-action">View</Link>}
+      <Link href={`/admin/products/edit/${encodeURIComponent(product.id)}`} className="admin-product-action">Edit</Link>
+      {product.fullPdf ? (
+        <a href={`/api/admin/products/${encodeURIComponent(product.id)}/download`} className="admin-product-action is-accent">Download</a>
       ) : (
-        <span aria-disabled="true" title="Upload a full PDF to enable download" className="cursor-not-allowed rounded border border-gray-700 px-2 py-1 text-sm text-gray-500">
-          No PDF
-        </span>
+        <span className="admin-product-action is-disabled" title="Upload a protected full PDF to enable downloads">No PDF</span>
       )}
-      <Link href={'/admin/products/edit/' + id} className="rounded border px-2 py-1 text-sm">Edit</Link>
       <form action="/api/admin/products/action" method="post">
-        <input type="hidden" name="id" value={id} />
-        <button name="_action" value="toggle" className="rounded border px-2 py-1 text-sm">{published ? 'Unpublish' : 'Publish'}</button>
+        <input type="hidden" name="id" value={product.id} />
+        <button name="_action" value="toggle" className="admin-product-action">{product.published ? 'Unpublish' : 'Publish'}</button>
       </form>
       <form action="/api/admin/products/action" method="post">
-        <input type="hidden" name="id" value={id} />
-        <button name="_action" value="feature" className="rounded border border-accent px-2 py-1 text-sm text-accent">{featured ? 'Remove Featured' : 'Feature'}</button>
+        <input type="hidden" name="id" value={product.id} />
+        <button name="_action" value="feature" className="admin-product-action is-accent">{product.featured ? 'Unfeature' : 'Feature'}</button>
       </form>
-      <form action="/api/admin/products/action" method="post">
-        <input type="hidden" name="id" value={id} />
-        <button name="_action" value="delete" className="rounded bg-red-600 px-2 py-1 text-sm">Delete</button>
+      <form action="/api/admin/products/action" method="post" onSubmit={(event) => {
+        if (!window.confirm(`Delete “${product.title}”? This cannot be undone.`)) event.preventDefault()
+      }}>
+        <input type="hidden" name="id" value={product.id} />
+        <button name="_action" value="delete" className="admin-product-action is-danger">Delete</button>
       </form>
     </div>
   )
 }
 
-export default function AdminProductsList({ products }: { products: ProductListItem[] }) {
+function statusClass(isActive: boolean) {
+  return `admin-product-status${isActive ? ' is-active' : ''}`
+}
+
+export default function AdminProductsList({ products, success }: { products: ProductListItem[]; success?: string }) {
   const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('all')
+  const [difficulty, setDifficulty] = useState('all')
+  const [publication, setPublication] = useState('all')
+  const [featured, setFeatured] = useState('all')
+  const [sort, setSort] = useState('newest')
+  const [page, setPage] = useState(1)
+  const pageSize = 10
+  const categoryOptions = Array.from(new Set(products.flatMap((product) => product.categories))).sort((a, b) => a.localeCompare(b))
+  const difficultyOptions = Array.from(new Set(products.map((product) => product.difficulty).filter((value): value is string => Boolean(value))))
+    .sort((a, b) => a.localeCompare(b))
   const query = search.trim().toLocaleLowerCase()
-  const filteredProducts = query
-    ? products.filter((product) =>
-        `${product.title} ${product.artist} ${product.slug}`.toLocaleLowerCase().includes(query)
-      )
-    : products
+
+  const filtered = products.filter((product) => {
+    if (query && !product.title.toLocaleLowerCase().includes(query)) return false
+    if (category !== 'all' && !product.categories.includes(category)) return false
+    if (difficulty === 'not-specified' && product.difficulty) return false
+    if (difficulty !== 'all' && difficulty !== 'not-specified' && product.difficulty !== difficulty) return false
+    if (publication === 'published' && !product.published) return false
+    if (publication === 'draft' && product.published) return false
+    if (featured === 'featured' && !product.featured) return false
+    if (featured === 'not-featured' && product.featured) return false
+    return true
+  }).sort((a, b) => {
+    if (sort === 'oldest') return a.createdAt.localeCompare(b.createdAt)
+    if (sort === 'title') return a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+    if (sort === 'price-low') return a.price - b.price
+    if (sort === 'price-high') return b.price - a.price
+    return b.createdAt.localeCompare(a.createdAt)
+  })
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const pageProducts = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const publishedCount = products.filter((product) => product.published).length
+  const featuredCount = products.filter((product) => product.featured).length
+  const summary = [
+    { label: 'Total Products', value: products.length, tone: 'gold' },
+    { label: 'Published Products', value: publishedCount, tone: 'green' },
+    { label: 'Draft Products', value: products.length - publishedCount, tone: 'muted' },
+    { label: 'Featured Arrangements', value: featuredCount, tone: 'gold' },
+  ]
+
+  function resetPage(setter: (value: string) => void, value: string) {
+    setter(value)
+    setPage(1)
+  }
 
   return (
-    <>
-      <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-5">
-        <h1 className="text-2xl font-bold">Products</h1>
-        {products.length > 0 && (
-          <div className="min-w-0">
-            <label htmlFor="admin-product-search" className="sr-only">Search products</label>
-            <div className="relative">
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400">
-                <circle cx="10.8" cy="10.8" r="6.3" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                <path d="m15.5 15.5 4.2 4.2" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" />
-              </svg>
-              <input
-                id="admin-product-search"
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search by title, artist, or slug"
-                className="form-input w-full"
-                style={{ height: '42px', paddingLeft: '2.75rem' }}
-              />
-            </div>
-          </div>
-        )}
-        <Link href="/admin/products/new" className="flex h-[42px] w-full items-center justify-center whitespace-nowrap rounded bg-accent px-4 text-center text-black md:w-auto">
-          Add New Tab
+    <section className="admin-products-page">
+      <header className="admin-products-heading">
+        <div>
+          <span className="admin-eyebrow">Store catalogue</span>
+          <h1>Products Management</h1>
+          <p>Review and manage guitar tabs, publication status, categories and featured arrangements.</p>
+        </div>
+        <Link href="/admin/products/new" className="admin-products-add-button">
+          <span aria-hidden="true">＋</span> Add New Product
         </Link>
+      </header>
+
+      {success && notices[success] && <p className="admin-products-notice" role="status">{notices[success]}</p>}
+
+      <div className="admin-products-summary" aria-label="Product summary">
+        {summary.map((item) => (
+          <article className="admin-products-summary-card" key={item.label}>
+            <span className={`admin-products-summary-mark is-${item.tone}`} aria-hidden="true" />
+            <div><span>{item.label}</span><strong>{item.value.toLocaleString('en-KE')}</strong></div>
+          </article>
+        ))}
       </div>
 
-      {products.length === 0 ? (
-        <div className="rounded bg-gray-900 p-4">No products yet.</div>
-      ) : filteredProducts.length === 0 ? (
-        <div className="rounded bg-gray-900 p-4">No tabs match your search.</div>
-      ) : (
-        <>
-          <div className="grid gap-3 md:hidden">
-            {filteredProducts.map((product) => (
-              <article key={product.id} className="min-w-0 rounded-lg border border-gray-800 bg-gray-900 p-3">
-                <div className="flex min-w-0 gap-3">
-                  <img
-                    src={product.coverImage ?? '/placeholders/cover1.jpg'}
-                    alt={product.title + ' cover'}
-                    className="h-20 w-16 shrink-0 rounded object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <h2 className="break-words font-semibold">{product.title}</h2>
-                    <p className="break-words text-sm text-gray-400">{product.artist}</p>
-                    <p className="mt-1 text-sm">{product.currency} {product.price}</p>
-                    <p className="text-sm text-gray-400">{product.published ? 'Published' : 'Draft'}{product.featured ? ' · Featured' : ''}</p>
-                  </div>
-                </div>
-                <div className="mt-3 border-t border-gray-800 pt-3">
-                  <ProductActions id={product.id} published={product.published} featured={product.featured} hasPdf={Boolean(product.fullPdf)} />
-                </div>
-              </article>
-            ))}
-          </div>
+      <section className="admin-products-catalog-panel" aria-label="Product catalogue">
+        <div className="admin-products-toolbar">
+          <label className="admin-products-search">
+            <span className="sr-only">Search product titles</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.3" /><path d="m15.5 15.5 4.2 4.2" /></svg>
+            <input type="search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search product title" />
+          </label>
+          <label><span className="sr-only">Filter by category</span><select value={category} onChange={(event) => resetPage(setCategory, event.target.value)}><option value="all">All categories</option>{categoryOptions.map((option) => <option value={option} key={option}>{option}</option>)}</select></label>
+          <label><span className="sr-only">Filter by difficulty</span><select value={difficulty} onChange={(event) => resetPage(setDifficulty, event.target.value)}><option value="all">All difficulties</option>{difficultyOptions.map((option) => <option value={option} key={option}>{option}</option>)}<option value="not-specified">Not specified</option></select></label>
+          <label><span className="sr-only">Filter by publication status</span><select value={publication} onChange={(event) => resetPage(setPublication, event.target.value)}><option value="all">All statuses</option><option value="published">Published</option><option value="draft">Draft</option></select></label>
+          <label><span className="sr-only">Filter by featured status</span><select value={featured} onChange={(event) => resetPage(setFeatured, event.target.value)}><option value="all">All featured states</option><option value="featured">Featured</option><option value="not-featured">Not featured</option></select></label>
+          <label><span className="sr-only">Sort products</span><select value={sort} onChange={(event) => resetPage(setSort, event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option><option value="price-low">Price low to high</option><option value="price-high">Price high to low</option></select></label>
+        </div>
 
-          <div className="-mx-4 hidden w-[calc(100%_+_2rem)] overflow-x-auto rounded bg-gray-900 md:block">
-            <table className="w-full min-w-[760px] table-auto">
-              <thead className="bg-gray-800">
-                <tr>
-                  <th className="p-3 text-left">Image</th>
-                  <th className="p-3 text-left">Title</th>
-                  <th className="p-3 text-left">Artist</th>
-                  <th className="p-3 text-left">Price</th>
-                  <th className="p-3 text-left">Status</th>
-                  <th className="p-3 text-left">Featured</th>
-                  <th className="p-3 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="h-14 border-t border-gray-800">
-                    <td className="p-2 align-middle"><img src={product.coverImage ?? '/placeholders/cover1.jpg'} alt={product.title + ' cover'} className="h-9 w-8 rounded object-contain" /></td>
-                    <td className="max-w-56 truncate p-2 align-middle">{product.title}</td>
-                    <td className="max-w-48 truncate p-2 align-middle">{product.artist}</td>
-                    <td className="whitespace-nowrap p-2 align-middle">{product.currency} {product.price}</td>
-                    <td className="whitespace-nowrap p-2 align-middle">{product.published ? 'Published' : 'Draft'}</td>
-                    <td className="whitespace-nowrap p-2 align-middle">{product.featured ? 'Featured' : '—'}</td>
-                    <td className="p-2 align-middle"><ProductActions id={product.id} published={product.published} featured={product.featured} hasPdf={Boolean(product.fullPdf)} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-    </>
+        <div className="admin-products-results">
+          <span>{filtered.length.toLocaleString('en-KE')} {filtered.length === 1 ? 'product' : 'products'}</span>
+          {filtered.length > 0 && <span>Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)}</span>}
+        </div>
+
+        {products.length === 0 ? (
+          <div className="admin-products-empty"><h2>No products yet</h2><p>Add your first guitar tab to start building the catalogue.</p><Link href="/admin/products/new" className="admin-products-add-button">Add New Product</Link></div>
+        ) : filtered.length === 0 ? (
+          <p className="admin-products-empty-note">No products match these search and filter choices.</p>
+        ) : (
+          <>
+            <div className="admin-products-mobile-list">
+              {pageProducts.map((product) => (
+                <article className="admin-products-mobile-card" key={product.id}>
+                  <div className="admin-products-mobile-main">
+                    <img src={product.coverImage || '/placeholders/cover1.jpg'} alt="" />
+                    <div className="admin-products-mobile-copy">
+                      <h2>{product.title}</h2><p>{product.artist}</p>
+                      <strong>KES {product.price.toLocaleString('en-KE')}</strong>
+                    </div>
+                  </div>
+                  <dl className="admin-products-mobile-meta">
+                    <div><dt>Category</dt><dd>{product.categories.join(', ') || 'Uncategorized'}</dd></div>
+                    <div><dt>Difficulty</dt><dd>{product.difficulty || 'Not specified'}</dd></div>
+                    <div><dt>Status</dt><dd><span className={statusClass(product.published)}>{product.published ? 'Published' : 'Draft'}</span></dd></div>
+                    <div><dt>Featured</dt><dd><span className={statusClass(product.featured)}>{product.featured ? 'Featured' : 'Not featured'}</span></dd></div>
+                    <div><dt>Date added</dt><dd>{new Date(product.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</dd></div>
+                  </dl>
+                  <ProductActions product={product} />
+                </article>
+              ))}
+            </div>
+
+            <div className="admin-products-table-wrap">
+              <table className="admin-products-table">
+                <thead><tr><th>Product</th><th>Category</th><th>Difficulty</th><th>Price</th><th>Status</th><th>Featured</th><th>Date added</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {pageProducts.map((product) => (
+                    <tr key={product.id}>
+                      <td><div className="admin-products-table-product"><img src={product.coverImage || '/placeholders/cover1.jpg'} alt="" /><div><strong>{product.title}</strong><span>{product.artist}</span></div></div></td>
+                      <td>{product.categories.join(', ') || 'Uncategorized'}</td>
+                      <td>{product.difficulty || <span className="admin-products-muted">Not specified</span>}</td>
+                      <td className="admin-products-price">KES {product.price.toLocaleString('en-KE')}</td>
+                      <td><span className={statusClass(product.published)}>{product.published ? 'Published' : 'Draft'}</span></td>
+                      <td><span className={statusClass(product.featured)}>{product.featured ? 'Featured' : 'Not featured'}</span></td>
+                      <td className="admin-products-date">{new Date(product.createdAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                      <td><ProductActions product={product} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {totalPages > 1 && <nav className="admin-products-pagination" aria-label="Product pages">
+              <button type="button" onClick={() => setPage(currentPage - 1)} disabled={currentPage === 1}>Previous</button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <button type="button" onClick={() => setPage(currentPage + 1)} disabled={currentPage === totalPages}>Next</button>
+            </nav>}
+          </>
+        )}
+      </section>
+    </section>
   )
 }

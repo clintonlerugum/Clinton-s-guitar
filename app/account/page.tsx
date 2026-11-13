@@ -3,6 +3,8 @@ import { prisma } from '../../lib/prisma'
 import Link from 'next/link'
 import OrderDeleteButton from '../../components/OrderDeleteButton'
 import PendingMpesaAutoCheck from '../../components/PendingMpesaAutoCheck'
+import { getStoreSettings } from '../../lib/store-settings'
+import { formatStoreDate } from '../../lib/format-store-date'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +24,7 @@ function SignInPrompt() {
 }
 
 export default async function AccountPage({ searchParams }: { searchParams?: { pendingOrderId?: string; failedOrderId?: string } }) {
+  const settings = await getStoreSettings()
   const token = getTokenFromCookies()
   const data: any = verifyToken(token)
   if (!data || typeof data.id !== 'string') {
@@ -80,7 +83,7 @@ export default async function AccountPage({ searchParams }: { searchParams?: { p
               <div className="flex flex-wrap justify-between gap-x-4 gap-y-2">
                 <div className="min-w-0 flex-1">
                   <div className="break-all">Order code: {order.id}</div>
-                  <div className="mt-1 text-sm text-gray-400">{order.createdAt.toLocaleDateString()}</div>
+                  <div className="mt-1 text-sm text-gray-400">{formatStoreDate(order.createdAt, settings)}</div>
                 </div>
                 <div className="shrink-0 sm:text-right">
                   <div>{order.status}</div>

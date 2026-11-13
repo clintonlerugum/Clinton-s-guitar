@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
     return new NextResponse(null, {
       status: 303,
-      headers: { Location: new URL('/admin/products', req.url).toString() }
+      headers: { Location: new URL('/admin/products?success=created', req.url).toString() }
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to create the tab.'

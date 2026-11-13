@@ -12,8 +12,10 @@ export async function POST(req: Request) {
   const id = form.get('id') as string | null
   if (!action || !id) return NextResponse.json({ error: 'Missing' }, { status: 400 })
 
+  let success: string
   if (action === 'delete') {
     await prisma.product.delete({ where: { id } })
+    success = 'deleted'
   } else if (action === 'toggle') {
     const p = await prisma.product.findUnique({ where: { id } })
     if (!p) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -21,14 +23,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Upload the protected full PDF before publishing this tab.' }, { status: 400 })
     }
     await prisma.product.update({ where: { id }, data: { published: !p.published } })
+    success = p.published ? 'unpublished' : 'published'
   } else if (action === 'feature') {
     const product = await prisma.product.findUnique({ where: { id }, select: { featured: true } })
     if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     await prisma.product.update({ where: { id }, data: { featured: !product.featured } })
+    success = product.featured ? 'unfeatured' : 'featured'
   } else {
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
   }
 
-  // Redirect back to products page instead of returning JSON
-  return NextResponse.redirect(new URL('/admin/products', req.url))
+  const target = new URL('/admin/products', req.url)
+  target.searchParams.set('success', success)
+  return NextResponse.redirect(target)
 }

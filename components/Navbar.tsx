@@ -19,6 +19,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const [open, setOpen] = React.useState(false)
   const [cartCount, setCartCount] = React.useState(0)
+  const [brand, setBrand] = React.useState("Clinton's Guitar")
   const matchesRoute = (route: string) => pathname === route || pathname.startsWith(`${route}/`)
   const activeHref = matchesRoute('/')
     ? '/'
@@ -44,10 +45,22 @@ export default function Navbar() {
     }
   }, [])
 
+  React.useEffect(() => {
+    fetch('/api/store/settings')
+      .then((response) => {
+        if (!response.ok) throw new Error('Unable to load public store branding.')
+        return response.json()
+      })
+      .then((settings: { storeName: string }) => {
+        setBrand(settings.storeName)
+      })
+      .catch((error) => console.error(error))
+  }, [])
+
   return (
     <header className="site-nav">
       <div className="container site-nav-inner">
-        <Link href="/" className="logo-link" onClick={() => setOpen(false)}>Clinton&apos;s Guitar</Link>
+        <Link href="/" className="logo-link" onClick={() => setOpen(false)}>{brand}</Link>
 
         <nav className="desktop-nav">
           <Link href="/" className={activeHref === '/' ? 'active' : undefined} aria-current={activeHref === '/' ? 'page' : undefined}>Home</Link>

@@ -1,7 +1,12 @@
-export default function Contact() {
+import { getStoreSettings } from '../../lib/store-settings'
+
+export const dynamic = 'force-dynamic'
+
+export default async function Contact() {
+  const settings = await getStoreSettings()
   return (
     <section className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Contact Clinton's Guitar</h1>
+      <h1 className="text-3xl font-bold mb-6">Contact {settings.storeName}</h1>
       
       <div className="space-y-6">
         <div>
@@ -25,7 +30,8 @@ export default function Contact() {
 
         <div className="mt-8 p-6 bg-gray-900 rounded">
           <h3 className="font-semibold mb-2">Direct Contact</h3>
-          <p className="text-gray-300">Email: <a href="mailto:lerugumclintonguitars@gmail.com">lerugumclintonguitars@gmail.com</a></p>
+          <p className="text-gray-300">Email: <a href={`mailto:${settings.storeEmail}`}>{settings.storeEmail}</a></p>
+          {settings.supportContact && <p className="mt-2 whitespace-pre-wrap text-gray-300">{settings.supportContact}</p>}
           <p className="text-gray-300 mt-2">Response time: Within 24 hours</p>
         </div>
       </div>

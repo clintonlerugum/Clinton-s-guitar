@@ -1,8 +1,11 @@
 import { prisma } from '../../../../lib/prisma'
+import { getStoreSettings } from '../../../../lib/store-settings'
+import { formatStoreDate } from '../../../../lib/format-store-date'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminCustomersPage() {
+  const settings = await getStoreSettings()
   const [customerCount, customers] = await Promise.all([
     prisma.user.count({ where: { role: 'CUSTOMER' } }),
     prisma.user.findMany({
@@ -41,7 +44,7 @@ export default async function AdminCustomersPage() {
                 <h2 className="break-words font-semibold">{customer.name || 'Name not provided'}</h2>
                 <p className="break-all text-sm text-gray-300">{customer.email}</p>
                 <div className="mt-2 flex flex-wrap justify-between gap-2 text-sm text-gray-400">
-                  <span>Joined {customer.createdAt.toLocaleDateString()}</span>
+                  <span>Joined {formatStoreDate(customer.createdAt, settings)}</span>
                   <span>{customer._count.orders} orders</span>
                 </div>
               </article>
@@ -63,7 +66,7 @@ export default async function AdminCustomersPage() {
                   <tr key={customer.id} className="border-t border-gray-800">
                     <td className="max-w-56 break-words p-3">{customer.name || 'Name not provided'}</td>
                     <td className="max-w-72 break-all p-3">{customer.email}</td>
-                    <td className="whitespace-nowrap p-3">{customer.createdAt.toLocaleDateString()}</td>
+                    <td className="whitespace-nowrap p-3">{formatStoreDate(customer.createdAt, settings)}</td>
                     <td className="p-3">{customer._count.orders}</td>
                   </tr>
                 ))}

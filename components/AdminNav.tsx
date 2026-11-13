@@ -11,7 +11,7 @@ const navigationItems = [
   { label: 'Orders', href: '/admin/orders', icon: 'orders' },
   { label: 'Customers', href: '/admin/customers', icon: 'customers' },
   { label: 'Messages', href: '/admin#recent-messages', icon: 'messages' },
-  { label: 'Settings', href: '/admin#admin-settings', icon: 'settings' },
+  { label: 'Settings', href: '/admin/settings', icon: 'settings' },
 ] as const
 
 function NavigationIcon({ name }: { name: (typeof navigationItems)[number]['icon'] }) {

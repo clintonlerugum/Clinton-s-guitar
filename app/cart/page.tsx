@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma'
 import Link from 'next/link'
 import { parseCartCookie } from '../../lib/cart'
 import CartItemControls from '../../components/CartItemControls'
+import { getStoreSettings } from '../../lib/store-settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,7 @@ function formatPrice(currency: string, amount: number) {
 }
 
 export default async function CartPage({ searchParams }: { searchParams?: { error?: string } }) {
+  const settings = await getStoreSettings()
   const cart = parseCartCookie(cookies().get('cart')?.value)
   const cartIsInvalid = cart === null
   const validCart = cart ?? []
@@ -43,7 +45,9 @@ export default async function CartPage({ searchParams }: { searchParams?: { erro
       {searchParams?.error === 'empty' && <p className="cart-alert cart-alert-error">Your cart has no available tabs to purchase.</p>}
       {searchParams?.error === 'invalid' && <p className="cart-alert cart-alert-error">Your cart data is invalid. Add the tabs again before checkout.</p>}
       {searchParams?.error === 'currency' && <p className="cart-alert cart-alert-error">M-Pesa checkout currently supports KES orders only.</p>}
-      {searchParams?.error && !['phone', 'empty', 'invalid', 'currency'].includes(searchParams.error) && (
+      {searchParams?.error === 'payments-disabled' && <p className="cart-alert cart-alert-error">M-Pesa checkout is currently unavailable. Please contact the store for assistance.</p>}
+      {searchParams?.error === 'maintenance' && <p className="cart-alert cart-alert-error">Checkout is temporarily paused while the store is undergoing maintenance.</p>}
+      {searchParams?.error && !['phone', 'empty', 'invalid', 'currency', 'payments-disabled', 'maintenance'].includes(searchParams.error) && (
         <p className="cart-alert cart-alert-error">Could not start the M-Pesa payment. Please try again.</p>
       )}
       {cartIsInvalid && searchParams?.error !== 'invalid' && <p className="cart-alert cart-alert-error">Your cart data is invalid. Add the tabs again before checkout.</p>}
@@ -109,6 +113,7 @@ export default async function CartPage({ searchParams }: { searchParams?: { erro
             {unsupportedCurrency && <p className="order-summary-note">M-Pesa checkout currently supports KES orders only.</p>}
 
             <form action="/api/checkout" method="post" className="checkout-form">
+              {settings.paymentInstructions && <p className="order-summary-note">{settings.paymentInstructions}</p>}
               <label htmlFor="cart-checkout-phone">M-Pesa phone number</label>
               <input
                 id="cart-checkout-phone"
@@ -118,8 +123,8 @@ export default async function CartPage({ searchParams }: { searchParams?: { erro
                 placeholder="0712345678"
                 className="form-input"
               />
-              <button type="submit" className="btn btn-primary checkout-button">
-                Proceed to Checkout <span aria-hidden="true">→</span>
+              <button type="submit" className="btn btn-primary checkout-button" disabled={!settings.mpesaEnabled || settings.maintenanceMode || unsupportedCurrency}>
+                {settings.maintenanceMode ? 'Checkout temporarily paused' : !settings.mpesaEnabled ? 'M-Pesa checkout unavailable' : 'Proceed to Checkout'} {!settings.maintenanceMode && settings.mpesaEnabled && <span aria-hidden="true">→</span>}
               </button>
             </form>
 

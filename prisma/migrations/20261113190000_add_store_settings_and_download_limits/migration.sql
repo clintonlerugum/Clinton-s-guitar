@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS "StoreSettings" (
+  "id" TEXT NOT NULL DEFAULT 'default',
+  "values" JSONB NOT NULL DEFAULT '{}'::jsonb,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "StoreSettings_pkey" PRIMARY KEY ("id")
+);
+
+ALTER TABLE "Download"
+ADD COLUMN IF NOT EXISTS "attempts" INTEGER NOT NULL DEFAULT 0;

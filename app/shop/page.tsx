@@ -2,10 +2,18 @@ import Link from 'next/link'
 import ProductCard from '../../components/ProductCard'
 import { prisma } from '../../lib/prisma'
 import type { Prisma } from '@prisma/client'
+import { getStoreSettings } from '../../lib/store-settings'
+import { getTokenFromCookies, verifyToken } from '../../lib/auth'
+import StoreMaintenanceNotice from '../../components/StoreMaintenanceNotice'
 
 export const dynamic = 'force-dynamic'
 
 export default async function Shop({ searchParams }: { searchParams?: any }) {
+  const settings = await getStoreSettings()
+  const identity = verifyToken(getTokenFromCookies())
+  if (settings.maintenanceMode && !(identity && typeof identity === 'object' && identity.role === 'ADMIN')) {
+    return <StoreMaintenanceNotice />
+  }
   const q = typeof searchParams?.q === 'string' ? searchParams.q.trim() : ''
   const categorySlug = typeof searchParams?.category === 'string' ? searchParams.category : ''
   const selectedCategory = categorySlug

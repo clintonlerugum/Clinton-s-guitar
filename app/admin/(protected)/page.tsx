@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { prisma } from '../../../lib/prisma'
 import { getTokenFromCookies, verifyToken } from '../../../lib/auth'
 import AdminSalesChart from '../../../components/AdminSalesChart'
+import { getStoreSettings } from '../../../lib/store-settings'
+import { formatStoreDate } from '../../../lib/format-store-date'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +21,7 @@ function StatIcon({ type }: { type: 'orders' | 'revenue' | 'products' | 'custome
 }
 
 export default async function AdminPage() {
+  const settings = await getStoreSettings()
   const now = new Date()
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
   const periodStart = new Date(today)
@@ -69,7 +72,7 @@ export default async function AdminPage() {
   }
   const salesData = Array.from(salesByDay, ([date, amount]) => ({ date, amount }))
   const revenue = revenueAgg._sum.total ?? 0
-  const dateLabel = now.toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const dateLabel = formatStoreDate(now, settings, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
   const stats = [
     { label: 'Total orders', value: totalOrders.toLocaleString('en-KE'), note: 'All order statuses', type: 'orders' as const },
@@ -132,7 +135,7 @@ export default async function AdminPage() {
                       <span>{order.user?.name || order.user?.email || 'Customer account unavailable'}</span>
                     </div>
                     <div className="admin-order-meta">
-                      <span>{order.createdAt.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}</span>
+                      <span>{formatStoreDate(order.createdAt, settings, { day: 'numeric', month: 'short' })}</span>
                       <span className={`admin-status-pill admin-status-${paymentStatus.toLowerCase()}`}>{paymentStatus}</span>
                       <strong>{money(order.currency, order.total)}</strong>
                     </div>
@@ -200,7 +203,8 @@ export default async function AdminPage() {
         <section className="admin-panel admin-settings-panel" id="admin-settings" aria-labelledby="admin-settings-title">
           <span className="admin-eyebrow">Workspace</span>
           <h2 id="admin-settings-title">Settings</h2>
-          <p>There are no configurable admin settings pages in this project yet. Store and payment configuration remain unchanged.</p>
+          <p>Manage your store, payments, downloads, storefront and account preferences.</p>
+          <Link href="/admin/settings" className="admin-view-link">Open Settings Centre <span aria-hidden="true">→</span></Link>
         </section>
       </div>
     </div>

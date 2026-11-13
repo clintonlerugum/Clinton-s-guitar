@@ -4,6 +4,7 @@ import { prisma } from '../../../lib/prisma'
 import { getTokenFromCookies, verifyToken } from '../../../lib/auth'
 import { getMpesaCheckoutFailureDiagnostics, initiateStkPush, isValidKenyanPhone, MpesaRequestError, normalizeKenyanPhone } from '../../../lib/mpesa'
 import { parseCartCookieHeader } from '../../../lib/cart'
+import { getStoreSettings } from '../../../lib/store-settings'
 
 export const maxDuration = 60
 
@@ -29,6 +30,10 @@ function sameCart(
 }
 
 export async function POST(req: Request) {
+  const settings = await getStoreSettings()
+  if (!settings.mpesaEnabled) return NextResponse.redirect(new URL('/cart?error=payments-disabled', req.url))
+  if (settings.maintenanceMode) return NextResponse.redirect(new URL('/cart?error=maintenance', req.url))
+
   const token = getTokenFromCookies()
   const user = verifyToken(token)
   if (!user || typeof user === 'string' || typeof user.id !== 'string') {

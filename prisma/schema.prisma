@@ -69,6 +69,12 @@ model ProductCategory {
   @@index([categoryId])
 }
 
+model StoreSettings {
+  id        String   @id @default("default")
+  values    Json
+  updatedAt DateTime @updatedAt
+}
+
 model Order {
   id        String      @id @default(cuid())
   userId    String?
@@ -96,6 +102,7 @@ model Download {
   id        String   @id @default(cuid())
   userId    String
   productId String
+  attempts  Int      @default(0)
   createdAt DateTime @default(now())
   product   Product  @relation(fields: [productId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
