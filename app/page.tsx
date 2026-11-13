@@ -34,47 +34,45 @@ export default async function Home() {
   if (settings.maintenanceMode && !isAdmin) return <StoreMaintenanceNotice />
 
   const visibleProduct = { published: true, fullPdf: { not: null } }
-  const [latest, featured, categories] = await Promise.all([
-    prisma.product.findMany({
-      where: visibleProduct,
-      orderBy: { createdAt: 'desc' },
-      take: 6,
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        artist: true,
-        price: true,
-        currency: true,
-        difficulty: true,
-        coverImage: true,
+  const latest = await prisma.product.findMany({
+    where: visibleProduct,
+    orderBy: { createdAt: 'desc' },
+    take: 6,
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      artist: true,
+      price: true,
+      currency: true,
+      difficulty: true,
+      coverImage: true,
+    },
+  })
+  const featured = await prisma.product.findMany({
+    where: { ...visibleProduct, featured: true },
+    orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      artist: true,
+      price: true,
+      currency: true,
+      difficulty: true,
+      coverImage: true,
+    },
+  })
+  const categories = await prisma.category.findMany({
+    where: { active: true },
+    orderBy: { name: 'asc' },
+    include: {
+      products: {
+        where: { product: visibleProduct },
+        select: { productId: true },
       },
-    }),
-    prisma.product.findMany({
-      where: { ...visibleProduct, featured: true },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        artist: true,
-        price: true,
-        currency: true,
-        difficulty: true,
-        coverImage: true,
-      },
-    }),
-    prisma.category.findMany({
-      where: { active: true },
-      orderBy: { name: 'asc' },
-      include: {
-        products: {
-          where: { product: visibleProduct },
-          select: { productId: true },
-        },
-      },
-    }),
-  ])
+    },
+  })
 
   return (
     <section className="home-page">
