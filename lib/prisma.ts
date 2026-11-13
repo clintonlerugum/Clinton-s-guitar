@@ -21,6 +21,9 @@ function createPrismaClient() {
 
   const pool = new Pool({
     connectionString,
+    // Supabase's session pool limit is shared across Next.js worker processes.
+    max: 3,
+    idleTimeoutMillis: 5_000,
     ssl: {
       ca: readFileSync(path.resolve(process.cwd(), caPath), 'utf8'),
       rejectUnauthorized: true,
