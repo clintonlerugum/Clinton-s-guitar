@@ -9,12 +9,18 @@ declare global {
   var prisma: PrismaClient | undefined
 }
 
-function limitPrismaConnections(connectionString: string) {
+function getRuntimeDatabaseUrl(connectionString: string) {
   const url = new URL(connectionString)
-  const configuredLimit = Number(url.searchParams.get('connection_limit'))
 
-  if (!Number.isInteger(configuredLimit) || configuredLimit < 1 || configuredLimit > 3) {
-    url.searchParams.set('connection_limit', '3')
+  if (url.hostname.endsWith('.pooler.supabase.com') && url.port === '5432') {
+    url.port = '6543'
+  }
+
+  if (url.hostname.endsWith('.pooler.supabase.com') && url.port === '6543') {
+    url.searchParams.set('connection_limit', '1')
+    url.searchParams.set('pgbouncer', 'true')
+  } else {
+    url.searchParams.set('connection_limit', '1')
   }
 
   return url.toString()
@@ -28,16 +34,18 @@ function createPrismaClient() {
   if (!caPath) {
     if (process.env.NODE_ENV === 'production') {
       return new PrismaClient({
-        datasources: { db: { url: limitPrismaConnections(connectionString) } },
+        datasources: { db: { url: getRuntimeDatabaseUrl(connectionString) } },
       })
     }
     throw new Error('Set SUPABASE_DB_CA to the Supabase database CA certificate path to use the verified Windows PostgreSQL adapter.')
   }
 
+  const poolUrl = new URL(getRuntimeDatabaseUrl(connectionString))
+  poolUrl.searchParams.delete('connection_limit')
+  poolUrl.searchParams.delete('pgbouncer')
   const pool = new Pool({
-    connectionString,
-    // Supabase's session pool limit is shared across Next.js worker processes.
-    max: 3,
+    connectionString: poolUrl.toString(),
+    max: 1,
     idleTimeoutMillis: 5_000,
     ssl: {
       ca: readFileSync(path.resolve(process.cwd(), caPath), 'utf8'),
@@ -49,4 +57,4 @@ function createPrismaClient() {
 }
 
 export const prisma = global.prisma ?? createPrismaClient()
-if (process.env.NODE_ENV !== 'production') global.prisma = prisma
+global.prisma = prisma
