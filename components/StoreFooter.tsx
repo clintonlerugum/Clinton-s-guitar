@@ -60,7 +60,7 @@ export default function StoreFooter() {
         </div>
         <div>
           <div className="font-semibold text-accent">Contact</div>
-          <div className="mt-3 break-words text-sm text-gray-300">Email: <a href={`mailto:${settings.storeEmail}`}>{settings.storeEmail}</a></div>
+          <div className="mt-3 break-words text-sm text-gray-300">Email: <a href="/contact#contact-form">{settings.storeEmail}</a></div>
           {contact && <div className="mt-2 whitespace-pre-wrap text-sm text-gray-300">{contact}</div>}
           {socialLinks.length > 0 && <div className="mt-3 flex flex-wrap gap-3 text-sm text-gray-300">{socialLinks.map(([label, url]) => <a href={url} key={label} target="_blank" rel="noreferrer">{label}</a>)}</div>}
           <div className="mt-2 text-sm text-gray-500">Response within 24 hours</div>

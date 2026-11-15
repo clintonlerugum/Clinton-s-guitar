@@ -2,7 +2,9 @@ import Link from 'next/link'
 
 const cards = [
   ['store', 'Store Information', 'Update store identity, contact details, logo and social links.', 'store'],
+  ['payment', 'Payment Settings', 'Manage M-Pesa checkout preferences without exposing payment credentials.', 'payment'],
   ['orders', 'Order Settings', 'Review supported order handling and payment safeguards.', 'orders'],
+  ['downloads', 'Download Settings', 'Review download limits and eligible customer re-download rules.', 'download'],
   ['notifications', 'Customer Notifications', 'Check email delivery availability and notification controls.', 'notifications'],
   ['storefront', 'Storefront Settings', 'Manage homepage sections, announcements and footer contact details.', 'storefront'],
   ['security', 'Admin Account & Security', 'Update admin email or password and end the current session.', 'security'],

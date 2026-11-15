@@ -1,39 +1,41 @@
+import Link from 'next/link'
 import { getStoreSettings } from '../../lib/store-settings'
+import ContactForm from '../../components/ContactForm'
 
 export const dynamic = 'force-dynamic'
 
 export default async function Contact() {
   const settings = await getStoreSettings()
   return (
-    <section className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Contact {settings.storeName}</h1>
-      
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Get in Touch</h2>
-          <form action="/api/contact" method="post" className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input name="name" type="text" placeholder="Your name" className="form-input" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input name="email" type="email" placeholder="your@email.com" className="form-input" required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Message</label>
-              <textarea name="message" placeholder="Your message" className="form-input h-32" required></textarea>
-            </div>
-            <button type="submit" className="btn btn-primary">Send Message</button>
-          </form>
+    <section className="contact-page">
+      <header className="contact-page-heading">
+        <span className="contact-eyebrow">We&apos;d love to hear from you</span>
+        <h1>Contact {settings.storeName}</h1>
+        <p>Have a question about an arrangement or your order? Send a note and it will arrive in our message inbox.</p>
+      </header>
+
+      <div className="contact-page-grid">
+        <div className="contact-form-card" id="contact-form">
+          <div className="contact-form-heading">
+            <h2>Send us a message</h2>
+            <p>Share a few details and we&apos;ll be in touch.</p>
+          </div>
+          <ContactForm />
         </div>
 
-        <div className="mt-8 p-6 bg-gray-900 rounded">
-          <h3 className="font-semibold mb-2">Direct Contact</h3>
-          <p className="text-gray-300">Email: <a href={`mailto:${settings.storeEmail}`}>{settings.storeEmail}</a></p>
-          {settings.supportContact && <p className="mt-2 whitespace-pre-wrap text-gray-300">{settings.supportContact}</p>}
-          <p className="text-gray-300 mt-2">Response time: Within 24 hours</p>
-        </div>
+        <aside className="contact-direct-card">
+          <span className="contact-direct-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m4 7 8 6 8-6" /></svg>
+          </span>
+          <span className="contact-eyebrow">Contact details</span>
+          <h2>Here to help</h2>
+          <p>For enquiries, use the form and your message will be saved to the Clinton&apos;s Guitar inbox.</p>
+          <div className="contact-direct-email">
+            <span>Email</span>
+            <Link href="/contact#contact-form">{settings.storeEmail}</Link>
+          </div>
+          {settings.supportContact && <p className="contact-support-detail">{settings.supportContact}</p>}
+        </aside>
       </div>
     </section>
   )

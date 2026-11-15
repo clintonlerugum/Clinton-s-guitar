@@ -3,7 +3,7 @@ import AdminProductsList from '../../../../components/AdminProductsList'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminProducts({ searchParams }: { searchParams?: { success?: string | string[] } }) {
+export default async function AdminProducts({ searchParams }: { searchParams?: { success?: string | string[]; featured?: string | string[] } }) {
   const products = await prisma.product.findMany({
     orderBy: { createdAt: 'desc' },
     select: {
@@ -25,6 +25,8 @@ export default async function AdminProducts({ searchParams }: { searchParams?: {
   })
   const requestedSuccess = searchParams?.success
   const success = Array.isArray(requestedSuccess) ? requestedSuccess[0] : requestedSuccess
+  const requestedFeatured = searchParams?.featured
+  const initialFeatured = (Array.isArray(requestedFeatured) ? requestedFeatured[0] : requestedFeatured) === 'true'
 
   return (
     <section className="min-w-0">
@@ -44,7 +46,7 @@ export default async function AdminProducts({ searchParams }: { searchParams?: {
         coverImage: product.coverImage,
         fullPdf: product.fullPdf,
         createdAt: product.createdAt.toISOString(),
-      }))} success={success} />
+      }))} success={success} initialFeatured={initialFeatured} />
     </section>
   )
 }

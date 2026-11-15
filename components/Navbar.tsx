@@ -27,11 +27,13 @@ export default function Navbar() {
       ? '/shop'
       : matchesRoute('/about')
         ? '/about'
-        : matchesRoute('/cart') || pathname.startsWith('/checkout/')
-          ? '/cart'
-          : ['/account', '/login', '/register'].some(matchesRoute)
-            ? '/account'
-            : null
+        : matchesRoute('/contact')
+          ? '/contact'
+          : matchesRoute('/cart') || pathname.startsWith('/checkout/')
+            ? '/cart'
+            : ['/account', '/login', '/register'].some(matchesRoute)
+              ? '/account'
+              : null
 
   React.useEffect(() => {
     const updateCartCount = () => setCartCount(getCartCount())
@@ -66,6 +68,7 @@ export default function Navbar() {
           <Link href="/" className={activeHref === '/' ? 'active' : undefined} aria-current={activeHref === '/' ? 'page' : undefined}>Home</Link>
           <Link href="/shop" className={activeHref === '/shop' ? 'active' : undefined} aria-current={activeHref === '/shop' ? 'page' : undefined}>Shop</Link>
           <Link href="/about" className={activeHref === '/about' ? 'active' : undefined} aria-current={activeHref === '/about' ? 'page' : undefined}>About</Link>
+          <Link href="/contact" className={activeHref === '/contact' ? 'active' : undefined} aria-current={activeHref === '/contact' ? 'page' : undefined}>Contact</Link>
           <Link href="/account" className={`nav-icon-link nav-account-link${activeHref === '/account' ? ' active' : ''}`} aria-current={activeHref === '/account' ? 'page' : undefined}>
             <svg className="nav-account-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5Z" /></svg>
             <span>Account</span>
@@ -92,6 +95,7 @@ export default function Navbar() {
             <Link href="/" className={activeHref === '/' ? 'active' : undefined} aria-current={activeHref === '/' ? 'page' : undefined} onClick={() => setOpen(false)}>Home</Link>
             <Link href="/shop" className={activeHref === '/shop' ? 'active' : undefined} aria-current={activeHref === '/shop' ? 'page' : undefined} onClick={() => setOpen(false)}>Shop</Link>
             <Link href="/about" className={activeHref === '/about' ? 'active' : undefined} aria-current={activeHref === '/about' ? 'page' : undefined} onClick={() => setOpen(false)}>About</Link>
+            <Link href="/contact" className={activeHref === '/contact' ? 'active' : undefined} aria-current={activeHref === '/contact' ? 'page' : undefined} onClick={() => setOpen(false)}>Contact</Link>
             <Link href="/account" className={`nav-icon-link nav-account-link${activeHref === '/account' ? ' active' : ''}`} aria-current={activeHref === '/account' ? 'page' : undefined} onClick={() => setOpen(false)}>
               <svg className="nav-account-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-4.42 0-8 2.24-8 5v3h16v-3c0-2.76-3.58-5-8-5Z" /></svg>
               <span>Account</span>

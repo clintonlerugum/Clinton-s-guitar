@@ -4,6 +4,7 @@ import { getTokenFromCookies, verifyToken } from '../../../lib/auth'
 import AdminSalesChart from '../../../components/AdminSalesChart'
 import { getStoreSettings } from '../../../lib/store-settings'
 import { formatStoreDate } from '../../../lib/format-store-date'
+import { AdminUnreadMessagesNotice } from '../../../components/AdminMessageNotifications'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,22 +28,25 @@ export default async function AdminPage() {
   const periodStart = new Date(today)
   periodStart.setUTCDate(periodStart.getUTCDate() - 89)
   const tokenData = verifyToken(getTokenFromCookies())
-  const adminEmail = tokenData && typeof tokenData === 'object' && 'email' in tokenData && typeof tokenData.email === 'string'
-    ? tokenData.email
+  const adminId = tokenData && typeof tokenData === 'object' && 'id' in tokenData && typeof tokenData.id === 'string'
+    ? tokenData.id
     : null
-  const firstName = adminEmail?.split('@')[0] || 'Admin'
+  const admin = adminId
+    ? await prisma.user.findUnique({ where: { id: adminId }, select: { name: true } })
+    : null
+  const welcomeName = admin?.name?.trim() || 'Clinton Lerugum'
 
   const [
     totalOrders,
-    totalProducts,
+    publishedProducts,
     totalCustomers,
     revenueAgg,
     paidOrders,
     recentOrders,
-    latestProducts,
+    activityProducts,
   ] = await Promise.all([
     prisma.order.count(),
-    prisma.product.count(),
+    prisma.product.count({ where: { published: true } }),
     prisma.user.count({ where: { role: 'CUSTOMER' } }),
     prisma.order.aggregate({ _sum: { total: true }, where: { status: 'PAID', currency: 'KES' } }),
     prisma.order.findMany({
@@ -51,14 +55,14 @@ export default async function AdminPage() {
       orderBy: { createdAt: 'asc' },
     }),
     prisma.order.findMany({
-      take: 6,
+      take: 4,
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { name: true, email: true } }, payment: { select: { status: true } } },
     }),
     prisma.product.findMany({
       take: 4,
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, title: true, artist: true, difficulty: true, price: true, currency: true, coverImage: true, published: true, featured: true },
+      orderBy: { updatedAt: 'desc' },
+      select: { id: true, title: true, createdAt: true, updatedAt: true, published: true },
     }),
   ])
 
@@ -72,12 +76,27 @@ export default async function AdminPage() {
   }
   const salesData = Array.from(salesByDay, ([date, amount]) => ({ date, amount }))
   const revenue = revenueAgg._sum.total ?? 0
-  const dateLabel = formatStoreDate(now, settings, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const activity = [
+    ...recentOrders.map((order) => ({
+      key: `order-${order.id}`,
+      title: `Order #${order.id.slice(-8).toUpperCase()}`,
+      detail: `${order.user?.name || order.user?.email || 'Customer account unavailable'} · ${order.payment?.status || order.status}`,
+      date: order.updatedAt,
+      href: '/admin/orders',
+    })),
+    ...activityProducts.map((product) => ({
+      key: `product-${product.id}`,
+      title: product.title,
+      detail: `${product.createdAt.getTime() === product.updatedAt.getTime() ? 'Added to catalogue' : 'Product record updated'} · ${product.published ? 'Published' : 'Draft'}`,
+      date: product.updatedAt,
+      href: `/admin/products/edit/${encodeURIComponent(product.id)}`,
+    })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5)
 
   const stats = [
     { label: 'Total orders', value: totalOrders.toLocaleString('en-KE'), note: 'All order statuses', type: 'orders' as const },
     { label: 'Total sales', value: money('KES', revenue), note: 'Paid orders only', type: 'revenue' as const },
-    { label: 'Total products', value: totalProducts.toLocaleString('en-KE'), note: 'Published and drafts', type: 'products' as const },
+    { label: 'Published products', value: publishedProducts.toLocaleString('en-KE'), note: 'Available in the shop', type: 'products' as const },
     { label: 'Total customers', value: totalCustomers.toLocaleString('en-KE'), note: 'Registered accounts', type: 'customers' as const },
   ]
 
@@ -86,17 +105,12 @@ export default async function AdminPage() {
       <header className="admin-dashboard-header">
         <div>
           <span className="admin-eyebrow">Admin workspace</span>
-          <h1>Welcome back, {firstName}</h1>
-          <p>Here&apos;s what&apos;s happening with your guitar tab store.</p>
-        </div>
-        <div className="admin-profile-card">
-          <div className="admin-avatar" aria-hidden="true">{firstName.slice(0, 1).toUpperCase()}</div>
-          <div className="admin-profile-copy">
-            <strong>{adminEmail || 'Administrator'}</strong>
-            <span>{dateLabel}</span>
-          </div>
+          <h1>Welcome back, {welcomeName}</h1>
+          <p>Your Clinton&apos;s Guitar store at a glance.</p>
         </div>
       </header>
+
+      <AdminUnreadMessagesNotice />
 
       <section className="admin-stat-grid" aria-label="Store statistics">
         {stats.map((stat) => (
@@ -146,65 +160,30 @@ export default async function AdminPage() {
           )}
         </section>
 
-        <section className="admin-panel admin-products-panel" aria-labelledby="admin-products-title">
+        <section className="admin-panel admin-activity-panel" aria-labelledby="admin-activity-title">
           <div className="admin-panel-heading">
             <div>
-              <span className="admin-eyebrow">Your catalog</span>
-              <h2 id="admin-products-title">Latest products</h2>
+              <span className="admin-eyebrow">Store updates</span>
+              <h2 id="admin-activity-title">Recent activity</h2>
             </div>
-            <Link href="/admin/products" className="admin-view-link">Manage products <span aria-hidden="true">→</span></Link>
+            <Link href="/admin/products" className="admin-view-link">Products <span aria-hidden="true">→</span></Link>
           </div>
-          {latestProducts.length === 0 ? (
-            <p className="admin-empty-note">No products yet. Add a tab to start your catalog.</p>
+          {activity.length === 0 ? (
+            <p className="admin-empty-note">Store activity will appear here as orders arrive and products are updated.</p>
           ) : (
-            <div className="admin-product-grid">
-              {latestProducts.map((product) => (
-                <article className="admin-product-card" key={product.id}>
-                  <Link href={`/admin/products/edit/${product.id}`} className="admin-product-image-link" aria-label={`Edit ${product.title}`}>
-                    <img src={product.coverImage || '/placeholders/cover1.jpg'} alt="" className="admin-product-image" />
-                  </Link>
-                  <div className="admin-product-info">
-                    <div className="admin-product-title-row">
-                      <h3>{product.title}</h3>
-                      <span className={`admin-published-dot${product.published ? ' is-published' : ''}`} title={product.published ? 'Published' : 'Draft'} />
-                    </div>
-                    <p>{product.difficulty || 'Difficulty not set'} · {money(product.currency, product.price)}</p>
-                    <Link href={`/admin/products/edit/${product.id}`}>Manage tab <span aria-hidden="true">→</span></Link>
-                    <form action="/api/admin/products/action" method="post" className="admin-feature-toggle">
-                      <input type="hidden" name="id" value={product.id} />
-                      <button type="submit" name="_action" value="feature">
-                        {product.featured ? 'Remove from Featured' : 'Add to Featured'}
-                      </button>
-                    </form>
+            <ul className="admin-activity-list">
+              {activity.map((item) => (
+                <li className="admin-activity-item" key={item.key}>
+                  <span className="admin-activity-mark" aria-hidden="true" />
+                  <div className="admin-activity-copy">
+                    <Link href={item.href}>{item.title}</Link>
+                    <span>{item.detail}</span>
+                    <time dateTime={item.date.toISOString()}>{formatStoreDate(item.date, settings, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}</time>
                   </div>
-                </article>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
-        </section>
-
-        <section className="admin-panel admin-messages-panel" id="recent-messages" aria-labelledby="admin-messages-title">
-          <div className="admin-panel-heading">
-            <div>
-              <span className="admin-eyebrow">Inbox</span>
-              <h2 id="admin-messages-title">Recent messages</h2>
-            </div>
-            <span className="admin-inbox-indicator" aria-label="Message inbox not connected"><span /> Not connected</span>
-          </div>
-          <div className="admin-inbox-empty">
-            <span className="admin-inbox-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5h16v12H9l-5 4V5Z" /><path d="M8 9h8M8 13h5" /></svg>
-            </span>
-            <p>This project does not currently store contact form messages in an admin inbox.</p>
-            <a href="mailto:lerugumclintonguitars@gmail.com">Open contact email <span aria-hidden="true">→</span></a>
-          </div>
-        </section>
-
-        <section className="admin-panel admin-settings-panel" id="admin-settings" aria-labelledby="admin-settings-title">
-          <span className="admin-eyebrow">Workspace</span>
-          <h2 id="admin-settings-title">Settings</h2>
-          <p>Manage your store, payments, downloads, storefront and account preferences.</p>
-          <Link href="/admin/settings" className="admin-view-link">Open Settings Centre <span aria-hidden="true">→</span></Link>
         </section>
       </div>
     </div>

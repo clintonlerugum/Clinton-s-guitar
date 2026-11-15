@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { getTokenFromCookies, verifyToken } from '../../../../../lib/auth'
-import { getStoreSettings } from '../../../../../lib/store-settings'
+import { getStoreSettings, isMpesaConfigured } from '../../../../../lib/store-settings'
 import { prisma } from '../../../../../lib/prisma'
 import AdminSettingsEditor from '../../../../../components/AdminSettingsEditor'
 import AdminSecuritySettings from '../../../../../components/AdminSecuritySettings'
 
 export const dynamic = 'force-dynamic'
 
-const editableSections = new Set(['store', 'orders', 'notifications', 'storefront', 'general'])
+const editableSections = new Set(['store', 'payment', 'orders', 'downloads', 'notifications', 'storefront', 'general'])
 
 export default async function AdminSettingsSectionPage({ params }: { params: { section: string } }) {
   const { section } = params
@@ -30,6 +30,7 @@ export default async function AdminSettingsSectionPage({ params }: { params: { s
   const settings = await getStoreSettings()
   const status = {
     emailConfigured: false,
+    mpesaConfigured: isMpesaConfigured(),
   }
 
   return (

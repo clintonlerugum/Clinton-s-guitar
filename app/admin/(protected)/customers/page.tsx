@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { prisma } from '../../../../lib/prisma'
 import { getStoreSettings } from '../../../../lib/store-settings'
 import { formatStoreDate } from '../../../../lib/format-store-date'
@@ -22,11 +23,12 @@ export default async function AdminCustomersPage() {
   ])
 
   return (
-    <section className="min-w-0">
+    <section className="admin-management-page">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
+          <span className="admin-eyebrow">Store relationships</span>
           <h1 className="text-2xl font-bold">Customers</h1>
-          <p className="mt-1 text-sm text-gray-400">Registered customer accounts</p>
+          <p className="mt-1 text-sm text-gray-400">Registered customer accounts and order history</p>
         </div>
         <div className="rounded-lg border border-gray-700 bg-gray-900 px-5 py-3 text-center">
           <div className="text-2xl font-bold text-accent">{customerCount}</div>
@@ -47,6 +49,8 @@ export default async function AdminCustomersPage() {
                   <span>Joined {formatStoreDate(customer.createdAt, settings)}</span>
                   <span>{customer._count.orders} orders</span>
                 </div>
+                <p className="mt-1 text-xs text-gray-500">Account status: Registered (no separate status flag)</p>
+                <Link href={`/admin/customers/${encodeURIComponent(customer.id)}`} className="mt-3 inline-flex text-xs font-semibold text-amber-200 hover:text-amber-100">View customer <span className="ml-1" aria-hidden="true">→</span></Link>
               </article>
             ))}
           </div>
@@ -59,6 +63,8 @@ export default async function AdminCustomersPage() {
                   <th className="p-3 text-left">Email</th>
                   <th className="p-3 text-left">Joined</th>
                   <th className="p-3 text-left">Orders</th>
+                  <th className="p-3 text-left">Account status</th>
+                  <th className="p-3 text-left">Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -68,11 +74,14 @@ export default async function AdminCustomersPage() {
                     <td className="max-w-72 break-all p-3">{customer.email}</td>
                     <td className="whitespace-nowrap p-3">{formatStoreDate(customer.createdAt, settings)}</td>
                     <td className="p-3">{customer._count.orders}</td>
+                    <td className="whitespace-nowrap p-3 text-gray-400">Registered*</td>
+                    <td className="p-3"><Link href={`/admin/customers/${encodeURIComponent(customer.id)}`} className="text-amber-200 hover:text-amber-100">View</Link></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <p className="mt-2 text-xs text-gray-500">*This system does not store a separate active or suspended status.</p>
         </>
       )}
     </section>

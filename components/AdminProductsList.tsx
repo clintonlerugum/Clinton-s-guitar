@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type ProductListItem = {
   id: string
@@ -60,15 +60,19 @@ function statusClass(isActive: boolean) {
   return `admin-product-status${isActive ? ' is-active' : ''}`
 }
 
-export default function AdminProductsList({ products, success }: { products: ProductListItem[]; success?: string }) {
+export default function AdminProductsList({ products, success, initialFeatured = false }: { products: ProductListItem[]; success?: string; initialFeatured?: boolean }) {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [difficulty, setDifficulty] = useState('all')
   const [publication, setPublication] = useState('all')
-  const [featured, setFeatured] = useState('all')
+  const [featured, setFeatured] = useState(initialFeatured ? 'featured' : 'all')
   const [sort, setSort] = useState('newest')
   const [page, setPage] = useState(1)
   const pageSize = 10
+  useEffect(() => {
+    setFeatured(initialFeatured ? 'featured' : 'all')
+    setPage(1)
+  }, [initialFeatured])
   const categoryOptions = Array.from(new Set(products.flatMap((product) => product.categories))).sort((a, b) => a.localeCompare(b))
   const difficultyOptions = Array.from(new Set(products.map((product) => product.difficulty).filter((value): value is string => Boolean(value))))
     .sort((a, b) => a.localeCompare(b))

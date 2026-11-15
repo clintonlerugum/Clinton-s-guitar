@@ -32,6 +32,15 @@ const sections: Record<string, { title: string; description: string; fields: Fie
       { key: 'facebookUrl', label: 'Facebook', type: 'url' },
     ],
   },
+  payment: {
+    title: 'Payment Settings',
+    description: 'Manage supported checkout preferences. Daraja credentials remain securely in server environment variables.',
+    fields: [
+      { key: 'mpesaEnabled', label: 'Enable M-Pesa checkout', type: 'checkbox' },
+      { key: 'paymentInstructions', label: 'Payment instructions', type: 'textarea', help: 'Shown to customers during checkout.' },
+    ],
+    notice: 'Do not enter API keys, passkeys, tokens or other payment credentials here.',
+  },
   orders: {
     title: 'Order Settings',
     description: 'Order records and payment verification remain controlled by the existing checkout integration.',
@@ -43,6 +52,15 @@ const sections: Record<string, { title: string; description: string; fields: Fie
     description: 'Notification controls are unavailable until an email delivery service is configured.',
     fields: [],
     notice: 'No email delivery service is configured. Order confirmations, payment notices, download availability emails, cancellation emails and editable templates are not available. The website will not show these notifications as enabled.',
+  },
+  downloads: {
+    title: 'Download Settings',
+    description: 'Review the existing limits applied by the protected PDF download flow.',
+    fields: [
+      { key: 'maxDownloadAttempts', label: 'Maximum download attempts', type: 'number', min: 0, max: 100, help: 'Use 0 for no attempt limit.' },
+      { key: 'downloadExpiryDays', label: 'Download expiry (days)', type: 'number', min: 0, max: 3650, help: 'Use 0 for no expiry.' },
+      { key: 'allowRedownload', label: 'Allow eligible customers to re-download', type: 'checkbox', help: 'Downloads remain limited to successfully purchased products.' },
+    ],
   },
   storefront: {
     title: 'Storefront Settings',
@@ -78,7 +96,7 @@ export default function AdminSettingsEditor({
 }: {
   section: string
   initialSettings: Settings
-  status: { emailConfigured: boolean }
+  status: { emailConfigured: boolean; mpesaConfigured: boolean }
 }) {
   const config = sections[section]
   const [values, setValues] = useState(initialSettings)
@@ -126,9 +144,10 @@ export default function AdminSettingsEditor({
         </div>
       </header>
 
-      {section === 'notifications' && (
+      {(section === 'notifications' || section === 'payment') && (
         <div className="admin-settings-status-grid">
-          <div><span>Email delivery</span><strong>{status.emailConfigured ? 'Configured' : 'Not configured'}</strong></div>
+          {section === 'notifications' && <div><span>Email delivery</span><strong>{status.emailConfigured ? 'Configured' : 'Not configured'}</strong></div>}
+          {section === 'payment' && <div><span>Daraja credentials</span><strong>{status.mpesaConfigured ? 'Configured' : 'Not configured'}</strong></div>}
         </div>
       )}
 
