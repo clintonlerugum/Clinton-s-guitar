@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-type ContactResult = { ok?: boolean; emailSent?: boolean; error?: string }
+type ContactResult = { ok?: boolean; emailAccepted?: boolean; duplicate?: boolean; error?: string }
 
 export default function ContactForm() {
   const [sending, setSending] = useState(false)
@@ -32,8 +32,10 @@ export default function ContactForm() {
       const result = await response.json() as ContactResult
       if (!response.ok || !result.ok) throw new Error(result.error || 'We could not save your message. Please try again.')
       form.reset()
-      if (result.emailSent) {
-        setSuccess('Thank you. Your message has been received and the store has been notified.')
+      if (result.duplicate) {
+        setSuccess('We already received this message. You do not need to submit it again.')
+      } else if (result.emailAccepted) {
+        setSuccess('Thank you. Your message has been received. The email notification was accepted by our provider.')
       } else {
         setError('Your message is saved to our inbox, but the email notification could not be sent. Please do not submit it again.')
       }

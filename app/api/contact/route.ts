@@ -61,7 +61,16 @@ async function sendNotification(name: string, email: string, subject: string, me
         signal: controller.signal,
       })
       if (!response.ok) {
-        console.error('Contact email notification provider rejected the request.', response.status)
+        const providerError = await response.json().catch(() => ({})) as { name?: unknown; message?: unknown }
+        const errorName = typeof providerError.name === 'string' ? providerError.name.slice(0, 80) : 'unknown'
+        const errorMessage = typeof providerError.message === 'string'
+          ? providerError.message.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]').slice(0, 300)
+          : 'No provider error message was returned.'
+        console.error('Contact email notification provider rejected the request.', {
+          status: response.status,
+          name: errorName,
+          message: errorMessage,
+        })
         return false
       }
       return true
@@ -145,7 +154,7 @@ export async function POST(request: Request) {
       select: { id: true },
     })
     if (duplicate) {
-      return NextResponse.json({ error: 'This message was already sent recently.' }, { status: 409 })
+      return NextResponse.json({ ok: true, duplicate: true }, { status: 200 })
     }
 
     const recentSubmissions = await prisma.contactMessage.count({
@@ -164,6 +173,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'We could not save your message. Please try again later.' }, { status: 500 })
   }
 
-  const emailSent = await sendNotification(name, email, subject, message)
-  return NextResponse.json({ ok: true, emailSent }, { status: emailSent ? 201 : 202 })
+  const emailAccepted = await sendNotification(name, email, subject, message)
+  return NextResponse.json({ ok: true, emailAccepted }, { status: emailAccepted ? 201 : 202 })
 }
